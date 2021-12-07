@@ -5,6 +5,8 @@ import clr
 import sys
 import os
 import psutil
+import threading
+import signal
 # from System.IO import *
 
 sys.path.append(os.environ['LIGHTFIELD_ROOT'])
@@ -34,32 +36,20 @@ class baz:
         self.experiment = None
 
         # self.start_lightfield(True)
+        signal.signal(signal.SIGINT, self._signal_hander)
+    
+    def _signal_hander(self, sig, frame):
+        logging.debug("Ctrl+C pressed, closing gracefully")
+        self.end_lightfield()
+        sys.exit(0)
 
-    def do_addition(self, a, b):
-
-        return a+b
-
-    def give_string(self):
-        return "Hello! Text is currently '{}'".format(self.set_text)
-
-    def receive_string(self, input):
-        logging.debug("SHOUTY DEBUG CAUSE WE GOT GIVEN A STRIIIING")
-        self.set_text = input
-        return "Thanks for sending {}".format(input)
-
-    def _private_method(self):
-        """
-        Shouldn't be visible to the client hopefully?
-        """
-        pass
-
-    def set_experiment_value(self, setting, value):
-        if self.experiment.Exists(setting):
+    def _set_experiment_value(self, setting, value):
+        if self.experiment and self.experiment.Exists(setting):
             self.experiment.SetValue(setting, value)
 
-    def get_experiment_value(self, value):
-        if self.experiment:
-            val = self.experiment.GetValue(value)
+    def _get_experiment_value(self, setting):
+        if self.experiment and self.experiment.Exists(setting):
+            val = self.experiment.GetValue(setting)
         else:
             val = "Error: Lightfield Software not running"
 
@@ -80,9 +70,21 @@ class baz:
 
     def start_lightfield(self, visible):
         logging.debug("STARTING LIGHTFIELD SOFTWARE")
+        # some sort of thread to start?
         if self.is_lightfield_started():
             return
-        self.auto = Automation(visible, List[String]())
+        for process in psutil.process_iter():
+            if process.name() in LIGHTFIELD_PROCESS_NAME:
+                logging.debug("Exisiting process found, killing before starting new process")
+                process.kill()
+
+        # c# compatable list
+        command_list = List[String]()
+
+        # command line option for an empty experiment
+        command_list.Add("/empty")
+
+        self.auto = Automation(visible, List[String](command_list))
         # Get experiment object
         logging.debug("GETTING EXPERIMENT OBJECT")
         self.experiment = self.auto.LightFieldApplication.Experiment
@@ -92,13 +94,14 @@ class baz:
         self.experiment.IsReadyToRunChanged += self._experiment_ready_to_run_changed_event
         self.auto.LightFieldClosing += self._lightfield_closing
 
+    def end_lightfield(self):
+        # close the lightfield object?
+        self.auto.Dispose()
+
     def is_lightfield_started(self):
         logging.debug("LOOKING FOR LIGHTFIELD")
-        running_processes = [p.name() for p in psutil.process_iter()]
-        is_running = LIGHTFIELD_PROCESS_NAME in running_processes
-        if is_running:
-            self.experiment = self.auto.LightFieldApplication.Experiment
-        return is_running
+        running = True if self.experiment else False
+        return running
 
     def get_spectrometer_info(self):
         logging.debug("GETTING SPECTROMETER INFO")
@@ -157,6 +160,30 @@ class baz:
         logging.debug("Lightfield Closing")
         self.experiment.IsReadyToRunChanged -= self._experiment_ready_to_run_changed_event
         self.auto.LightFieldClosing -= self._lightfield_closing
+        self.experiment = None
+
+    def save_experiment(self, experiment_name=None):
+        if self.experiment:
+            if experiment_name:
+                self.experiment.SaveAs(experiment_name)
+            else:
+                self.experiment.Save()
+
+    def load_experiment(self, experiment_name):
+        if self.experiment:
+            return self.experiment.Load(experiment_name)
+        else:
+            return False
+
+    def get_experiments(self):
+        if self.experiment:
+            experiments = [x for x in self.experiment.GetSavedExperiments()]
+            logging.debug(experiments)
+        else:
+            experiments  = []
+        return experiments
+
+
 
 
 if __name__ == "__main__":

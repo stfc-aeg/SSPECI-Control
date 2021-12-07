@@ -27,17 +27,23 @@ class ZeroRPCTestAdapter(ApiAdapter):
         self.endpoint = self.options.get("endpoint", "tcp://127.0.0.1:4242")
 
         # try:
-        self.client = zerorpc.Client()
+        self.client = zerorpc.Client(heartbeat=20)
         # self.client.debug = True
         self.client.connect(self.endpoint)
 
+        # self.set_start_lightfield(True)
+
         self.param_tree = ParameterTree({
-            "server_string": (self.get_string, self.set_string),
             "device_found": (self.get_device_found, None),
+            "lightfield_running": (self.is_lightfield_running, None),
             "start_lightfield": (None, self.set_start_lightfield),
             "spectrometer":
-                {
+            {
                     
+            },
+            "camera":
+            {
+                "exposure": (self.get_camera_exposure, self.set_camera_exposure)
             }
         })
         # except (LostRemote, TimeoutExpired) as remote_err:
@@ -86,24 +92,6 @@ class ZeroRPCTestAdapter(ApiAdapter):
 
         return ApiAdapterResponse(response, content_type=content_type, status_code=status)
 
-    def get_string(self):
-
-        try:
-            val = self.client.give_string()
-        
-        except (LostRemote, TimeoutExpired) as remote_err:
-            val = "Remote Error in get_string: {}".format(remote_err)
-
-        return val
-
-    def set_string(self, value):
-
-        try:
-            self.client.receive_string(value)
-
-        except (LostRemote, TimeoutExpired) as remote_err:
-            logging.error("Remote Error in set_string: %s", remote_err)
-
     def get_device_found(self):
 
         try:
@@ -118,4 +106,36 @@ class ZeroRPCTestAdapter(ApiAdapter):
             self.client.start_lightfield(value)
         except (LostRemote, TimeoutExpired) as remote_err:
             logging.error("Remote Error in set_start_lightfield: %s", remote_err)
+
+    def is_lightfield_running(self):
+
+        try:
+            return self.client.is_lightfield_started()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error trying to get Lightfield status: %s", remote_err)
+
+    def get_camera_exposure(self):
         
+        try:
+            return self.client.get_camera_exposure()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote error trying to get camera exposure: %s", remote_err)
+            return None
+
+    def set_camera_exposure(self, value):
+        
+        try:
+            self.client.set_camera_exposure(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote error trying to set camera exposure: %s", remote_err)
+
+
+    def get_spectrometer_grating_selected(self):
+        pass
+
+    def get_spectrometer_grating_status(self):
+        pass
+
+    def get_spectrometer_center_wavelength(self):
+        pass
+
