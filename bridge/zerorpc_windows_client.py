@@ -55,6 +55,9 @@ class baz:
 
         return val
 
+    def get_devices(self):
+        return [device.Model for device in self.experiment.ExperimentDevices]
+
     def device_found(self):
         # Find Connected Device
         if self.is_lightfield_started():
