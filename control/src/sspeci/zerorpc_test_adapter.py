@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import json
+from tempfile import TemporaryFile
 from gevent.timeout import Timeout
 
 import zerorpc
@@ -16,6 +17,13 @@ from odin.adapters.parameter_tree import ParameterTree, ParameterTreeError
 from odin.util import decode_request_body
 
 from tornado.ioloop import PeriodicCallback
+
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
+import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 
 class ZeroRPCTestAdapter(ApiAdapter):
@@ -34,16 +42,19 @@ class ZeroRPCTestAdapter(ApiAdapter):
         # self.set_start_lightfield(True)
 
         self.param_tree = ParameterTree({
-            "device_found": (self.get_device_found, None),
-            "lightfield_running": (self.is_lightfield_running, None),
             "start_lightfield": (None, self.set_start_lightfield),
-            "spectrometer":
+            "get_data": (None, self.get_data),
+            "binning":
+                {
+                    "binning_mode": (self.get_binning_mode, self.set_binning_mode),
+                    "row_bin_centre": (self.get_row_bin_centre, self.set_row_bin_centre),
+                    "bin_width": (self.get_bin_width, self.set_bin_width),
+                    "bin_height": (self.get_bin_height, self.set_bin_height)
+                },
+            "acquisition":
             {
-                    
-            },
-            "camera":
-            {
-                "exposure": (self.get_camera_exposure, self.set_camera_exposure)
+                "exposure": (self.get_exposure, self.set_exposure),
+                "centre_wavelength": (self.get_centre_wavelength, self.set_centre_wavelength)
             }
         })
         # except (LostRemote, TimeoutExpired) as remote_err:
@@ -114,28 +125,100 @@ class ZeroRPCTestAdapter(ApiAdapter):
         except (LostRemote, TimeoutExpired) as remote_err:
             logging.error("Remote Error trying to get Lightfield status: %s", remote_err)
 
-    def get_camera_exposure(self):
+    def get_data(self, frames):
+
+        try:
+            frame_data = self.client.start_acquire(frames)
+            data = np.array(frame_data['data'])
+            data = data.reshape([frame_data['height'], frame_data['width']])
+            logging.debug("Data shape: %s", data.shape)
+            logging.debug("Data Type: %s", data.dtype)
+            # plt.plot(data)
+            plt.title("Science!")
+            if frame_data['height'] == 1:
+                plt.plot(data.reshape(-1))
+                plt.xlabel("Wavelength (nm)")
+                plt.ylabel("Intensity (Counts)")
+            else:
+                plt.imshow(data)
+                plt.colorbar()
+            plt.show()
+
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error in get_data: %s", remote_err)
+
+    def get_binning_mode(self):
+      
+        try:
+            return self.client.get_region_of_interest()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error trying to Get Binning Mode: %s", remote_err)
+
+    def set_binning_mode(self, value):
+
+        try:
+            self.client.set_region_of_interest(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error trying to Set Binning Mode: %s", remote_err)
+
+    def get_row_bin_centre(self):
         
+        try:
+            return self.client.get_line_bin_row()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def set_row_bin_centre(self, value):
+    
+        try:
+            self.client.set_line_bin_row(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def get_bin_width(self):
+        try:
+            return self.client.get_num_columns_binned()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def set_bin_width(self, value):
+        try:
+            self.client.set_num_columns_binned(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def get_bin_height(self):
+        try:
+            return self.client.get_num_rows_binned()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def set_bin_height(self, value):
+        try:
+            self.client.set_num_rows_binned(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def get_exposure(self):
         try:
             return self.client.get_camera_exposure()
         except (LostRemote, TimeoutExpired) as remote_err:
-            logging.error("Remote error trying to get camera exposure: %s", remote_err)
-            return None
+            logging.error("Remote Error: %s", remote_err)
 
-    def set_camera_exposure(self, value):
-        
+    def set_exposure(self, value):
         try:
             self.client.set_camera_exposure(value)
         except (LostRemote, TimeoutExpired) as remote_err:
-            logging.error("Remote error trying to set camera exposure: %s", remote_err)
+            logging.error("Remote Error: %s", remote_err)
 
+    def get_centre_wavelength(self):
+        try:
+            return self.client.get_centre_wavelength()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
 
-    def get_spectrometer_grating_selected(self):
-        pass
-
-    def get_spectrometer_grating_status(self):
-        pass
-
-    def get_spectrometer_center_wavelength(self):
-        pass
-
+    def set_centre_wavelength(self, value):
+        try:
+            self.client.set_centre_wavelength(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
