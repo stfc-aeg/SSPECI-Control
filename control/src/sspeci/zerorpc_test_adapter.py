@@ -1,4 +1,6 @@
 import logging
+import re
+import io
 import sys
 import os
 import json
@@ -16,7 +18,9 @@ from odin.adapters.adapter import (ApiAdapter, ApiAdapterRequest,
 from odin.adapters.parameter_tree import ParameterTree, ParameterTreeError
 from odin.util import decode_request_body
 
-from tornado.ioloop import PeriodicCallback
+from tornado.ioloop import PeriodicCallback, IOLoop
+from tornado.concurrent import run_on_executor
+from concurrent import futures
 
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
@@ -28,6 +32,7 @@ import matplotlib.pyplot as plt
 
 class ZeroRPCTestAdapter(ApiAdapter):
 
+    executor = futures.ThreadPoolExecutor(max_workers=1)
 
     def __init__(self, **kwargs):
         super(ZeroRPCTestAdapter, self).__init__(**kwargs)
@@ -59,18 +64,30 @@ class ZeroRPCTestAdapter(ApiAdapter):
         })
         # except (LostRemote, TimeoutExpired) as remote_err:
             # logging.error("Unable to connect to Server: %s", remote_err)
-
+        self.rendered_graph = None
         logging.getLogger("zerorpc.channel").setLevel(logging.WARNING)
 
 
 
 
-    @response_types('application/json', default='application/json')
+    @response_types('application/json', 'image/*', 'image/webp', default='application/json')
     def get(self, path, request):
         try:
-            response = self.param_tree.get(path)
-            content_type = 'application/json'
-            status = 200
+            path_elems = re.split('[/?#]', path)
+            if path_elems[0] == 'image':
+                #return plot image
+                if self.rendered_graph:
+                    response = self.rendered_graph.getvalue()
+                    content_type = 'image/png'
+                    status = 200
+                else:
+                    response = {"response": "SpectrometerAdapter: No Graph Available"}
+                    content_type = 'application/json'
+                    status = 400
+            else:
+                response = self.param_tree.get(path)
+                content_type = 'application/json'
+                status = 200
         except ParameterTreeError as param_error:
             response = {'response': 'ZeroRPC GET error: {}'.format(param_error)}
             content_type = 'application/json'
@@ -125,27 +142,39 @@ class ZeroRPCTestAdapter(ApiAdapter):
         except (LostRemote, TimeoutExpired) as remote_err:
             logging.error("Remote Error trying to get Lightfield status: %s", remote_err)
 
-    def get_data(self, frames):
+    def get_data(self, frames=1):
+        IOLoop.current().add_callback(self.get_frame_from_spectrometer, frames)
 
+    def get_frame_from_spectrometer(self, frames):
+        logging.debug("Getting Frame : %d", frames)
         try:
-            frame_data = self.client.start_acquire(frames)
+            frame_data = self.client.start_acquire(1)
             data = np.array(frame_data['data'])
             data = data.reshape([frame_data['height'], frame_data['width']])
             logging.debug("Data shape: %s", data.shape)
             logging.debug("Data Type: %s", data.dtype)
             # plt.plot(data)
-            plt.title("Science!")
+
+            fig, ax1 = plt.subplots()
+
+            ax1.set_title("Science!")
             if frame_data['height'] == 1:
-                plt.plot(data.reshape(-1))
-                plt.xlabel("Wavelength (nm)")
-                plt.ylabel("Intensity (Counts)")
+                ax1.plot(data.reshape(-1))
+                ax1.set_xlabel("Wavelength (nm)")
+                ax1.set_ylabel("Intensity (Counts)")
             else:
-                plt.imshow(data)
-                plt.colorbar()
-            plt.show()
+                img = ax1.imshow(data)
+                fig.colorbar(img)
+            
+            self.rendered_graph = io.BytesIO()
+            fig.savefig(self.rendered_graph, format='png')
+            self.rendered_graph.seek(0)
 
         except (LostRemote, TimeoutExpired) as remote_err:
             logging.error("Remote Error in get_data: %s", remote_err)
+        finally:
+            if frames != 0:
+                IOLoop.current().call_later(0.5, self.get_frame_from_spectrometer, frames - 1)
 
     def get_binning_mode(self):
       

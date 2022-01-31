@@ -1,0 +1,24 @@
+:root {
+    --stfc-light-blue:#1E5Df8;
+    --stfc-dark-blue:#003088;
+    --stfc-orange:#ff9d1b;
+}
+
+body {
+    padding-top: 50px;
+}
+
+.odin-server {
+    padding: 40px 15px;
+    text-align: center;
+}
+
+h1 {
+    color: var(--stfc-dark-blue);
+}
+
+h2 {
+    color: var(--stfc-light-blue);
+}
+
+
