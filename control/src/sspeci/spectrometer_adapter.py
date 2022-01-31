@@ -30,12 +30,12 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
-class ZeroRPCTestAdapter(ApiAdapter):
+class SpectrometerAdapter(ApiAdapter):
 
     executor = futures.ThreadPoolExecutor(max_workers=1)
 
     def __init__(self, **kwargs):
-        super(ZeroRPCTestAdapter, self).__init__(**kwargs)
+        super(SpectrometerAdapter, self).__init__(**kwargs)
 
         self.endpoint = self.options.get("endpoint", "tcp://127.0.0.1:4242")
 
