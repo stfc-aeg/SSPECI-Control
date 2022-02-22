@@ -155,6 +155,7 @@ class APIController:
                 self.experiment.Acquire()
                 return None
             else:
+                logging.debug("Beginning acquisition of %d frames", num_frames)
                 data = self.experiment.Capture(num_frames) # returns IImageDataSetContractToViewHostAdapter?
                 extracted_data = self.get_file_data(data)
                 return extracted_data
@@ -215,6 +216,10 @@ class APIController:
     def export_file(self, file_name):
         if self.lightfield_running:
             self.file_handler.Export(self.export_settings, file_name)
+
+    def get_system_column_calibration(self):
+        if self.lightfield_running:
+            return self.experiment.SystemColumnCalibration
 
     # event handlers (not all will be needed maybe?)
 
@@ -348,7 +353,7 @@ class RPCServer:
             CameraSettings.ReadoutControlRegionsOfInterestBinnedSensorXBinning
         )
 
-    def set_num_colums_binned(self, value):
+    def set_num_columns_binned(self, value):
         """Set the number of columns to bin together, if the method of binning is 'BinnedSensor'"""
         self.api.set_experiment_value(
             CameraSettings.ReadoutControlRegionsOfInterestBinnedSensorXBinning,
@@ -380,6 +385,16 @@ class RPCServer:
             CameraSettings.ReadoutControlRegionsOfInterestLineSensorRowBinning,
             value
         )
+
+    # calibration info
+
+    def get_calibration_x_axis(self):
+        return self.api.get_experiment_value(
+            ExperimentSettings.AcquisitionCalibrationsXAxes
+        )
+
+    def get_system_column_calibration(self):
+        return self.api.get_system_column_calibration()
 
     def start_acquire(self, num_frames=0):
         """Start the acquisition. if num_frames is set above 0, this will return the data.
