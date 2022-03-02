@@ -5,13 +5,9 @@ import sys
 import os
 import json
 from tempfile import TemporaryFile
-from gevent.timeout import Timeout
 
 import zerorpc
 from zerorpc.exceptions import (LostRemote, TimeoutExpired)
-
-from odin_data.ipc_channel import IpcChannel, IpcChannelException
-from odin_data.ipc_message import IpcMessage, IpcMessageException
 
 from odin.adapters.adapter import (ApiAdapter, ApiAdapterRequest,
                                    ApiAdapterResponse, request_types, response_types)
@@ -26,7 +22,7 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
