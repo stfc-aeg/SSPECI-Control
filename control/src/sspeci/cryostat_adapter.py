@@ -64,7 +64,9 @@ class CryostatAdapter(ApiAdapter):
                 "power_limit": (lambda: self.cryo.power_limit, self.cryo.set_power_limit),
                 "auto_control_enabled" : (lambda: self.cryo.user_controller_enabled, self.cryo.set_controller_enabled),
                 "power_schedule_enabled": (lambda: self.cryo.power_schedule_enabled, self.cryo.set_power_schedule_enabled),
-                "power_schedule_selected": (lambda: self.cryo.selected_schedule, self.cryo.load_power_schedule)
+                "power_schedule_selected": (lambda: self.cryo.selected_schedule, self.cryo.load_power_schedule),
+                "power_schedules_avail": (lambda: os.listdir(self.power_schedule_directory), None),
+                "power_schedule": (lambda: self.cryo.power_lookup, None)
             },
             "system_goal": (lambda: "{}: {}".format(self.cryo.system_goal, self.cryo.system_state), None),
             "vacuum" : (lambda: self.cryo.vacuum_pressure, None),
@@ -154,8 +156,8 @@ class CryoClient:
         self.vacuum_pressure = -1
 
         self.bakeout_enabled = False
-        self.bakeout_temp = -1
-        self.bakeout_time = -1
+        self.bakeout_temp = -1.0
+        self.bakeout_time = -1.0
 
         self.can_abort = False
         self.can_cooldown = False
@@ -250,7 +252,6 @@ class CryoClient:
             logging.error("TIMEOUT OR CONNECTION ERROR OH NO")
 
         end_time = time.time()
-        logging.debug("Time Taken to get properties: %fs", end_time - start_time)
 
 
     def _get_prop(self, prop, session=None):

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>ODIN Control - Spectrometer</title>
+
+        <!-- Bootstrap -->
+        <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
+        <link href="css/bootstrap/bootstrap-switch.min.css" rel="stylesheet">
+        <link href="css/sspeci.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">
+                <img src="img/odin.png" width="30" height="30" class="d-inline-block align-top" alt="ODIN">
+                Spectrometer Integration
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                  <li class="nav-item active">
+                    <a class="nav-link" href="#">Home</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact</a>
+                  </li>
+                </ul>
+            </div>
+        </nav>
+
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" aria-selected="true" data-bs-toggle="tab" role="tab" aria-controls="home" data-bs-target="#home">
+                    Main Page
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" aria-selected="false" data-bs-toggle="tab" role="tab" aria-controls="spectrometer" data-bs-target="#spectrometer">
+                    Spectrometer
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" aria-selected="False" data-bs-toggle="tab" role="tab" aria-controls="cryostat" data-bs-target="#cryostat">
+                    Cryostat
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" aria-selected="False" data-bs-toggle="tab" role="tab" aria-controls="attocube" data-bs-target="#attocube">
+                    Attocube
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="home" role="tabpanel">
+                <h2 class="text-center">Home</h2>
+
+                <div class="container-fluid">
+                    <div class="row contflex"> <!-- status and control row -->
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">
+                                    System Status
+                                </div>
+                                <div class="card-body">
+                                    <div class="row contflex">
+                                        <div class="col">
+                                            <div class="alert alert-success" role="alert" id="spec_connected">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                Spectrometer Ready
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="alert alert-warning" role="alert" id="cryo_connected">
+                                                <i class="bi bi-exclamation-circle-fill d-none"></i>
+                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                    <span class="visually-hidden">Loading</span>
+                                                </div>
+                                                
+                                                Cryostat Cooling
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="alert alert-danger" role="alert" id="atto_connected">
+                                                <i class="bi bi-exclamation-octagon-fill"></i>
+                                                Attocube Disconnected
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row contflex">
+                                        <div class="alert alert-danger text-center" role="alert" id="system_status">
+                                            Not Currently Running
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- end of status column -->
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">
+                                    Basic Controls
+                                </div>
+                                <div class="card-body">
+                                    <button type="button" class="btn btn-primary btn-lg">Begin Aquisition</button>
+                                    <button type="button" class="btn btn-primary btn-lg" disabled>Begin Cooldown</button> 
+                                </div>
+                            </div>
+                        </div> <!-- End of Control Column-->
+                    </div> <!-- Status/column row-->
+                    <div class="row contflex">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">Spectrometer Image</div>
+                                <div class="card-body">
+                                    <img class="img-fluid spectrometer_img" id="spec_img" src="img/fake_spectrometer_input.png" data-src="/api/0.1/spectrometer/image">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">Temperature Graph</div>
+                                <div class="card-body">
+                                    <canvas id="temperature-chart" class="chart-temperature"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="spectrometer" role="tabpanel">
+<!-- ~~~~~~~~~~~~~~~~~SPECTROMETER TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                <h2 class="text-center">Spectrometer</h2>
+
+                <div class="container-fluid">
+                    <div class="row contflex"> <!-- status and control row -->
+                        <div class="col">
+                            <img class="img-fluid spectrometer_img" id="spec_img_2" src="img/fake_spectrometer_input.png" data-src="/api/0.1/spectrometer/image">
+                        </div>
+                        <div class="col-5">
+                            <div class="card">
+                                <div class="card-header">
+                                    Spectrometer Settings
+                                </div>
+                                <div class="card-body">
+                                    <div class="btn-group" role="group" aria-label="Binning Controls">
+                                        <input type="radio" class="btn-check" name="btnradio" id="btnBinFull" autocomplete="off" checked value="FullSensor">
+                                        <label class="btn btn-outline-primary" for="btnBinFull">Full Sensor</label>
+                                        <input type="radio" class="btn-check" name="btnradio" id="btnBin" autocomplete="off" value="BinnedSensor">
+                                        <label class="btn btn-outline-primary" for="btnBin">Full Sensor (Binned)</label>
+                                        <input type="radio" class="btn-check" name="btnradio" id="btnBinRow" autocomplete="off" value="LineSensor">
+                                        <label class="btn btn-outline-primary" for="btnBinRow">Rows Binned</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-bin-rows">Row Bin Size</span>
+                                        <input type="number" class="form-control" id="input-bin-rows">
+                                        <span class="input-group-text" for="input-bin-cols">Column Bin Size</span>
+                                        <input type="number" class="form-control" id="input-bin-cols">
+                                        <span class="input-group-text" for="input-bin-line">Line Bin Count</span>
+                                        <input type="number" class="form-control" id="input-bin-line">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-camera-exposure">Exposure</span>
+                                        <input type="number" class="form-control" id="input-camera-explosure">
+                                        <span class="input-group-text" for="input-camera-wavelength">Centre Wavelength</span>
+                                        <input type="number" class="form-control" id="input-camera-wavelength">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="cryostat" role="tabpanel">
+<!-- ~~~~~~~~~~~~~~~~~CRYOSTAT TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                <h2 class="text-center">Cryostat</h2>
+                <div class="container-fluid">
+                    <div class="row contflow">
+                        <div class="col"> <!--State Bit-->
+                            <div class="card">
+                                <div class="card-header">
+                                    Cryostat Status and Goal
+                                </div>
+                                <div class="card-body">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="alert alert-success" role="alert" id="cryo_goal">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    Goal: None
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="alert alert-success" role="alert" id="cryo_state">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    State: Ready
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col"> <!-- controls-->
+                            <div class="card">
+                                <div class="card-header">
+                                    Cryostat Controls
+                                </div>
+                                <div class="card-body contflex">
+                                    <div class="btn-group" role="group" aria-label="cryostat-controls">
+                                        <button type="button" class="btn btn-primary btn-lg" id="btn-cooldown">Cooldown</button>
+                                        <button type="button" class="btn btn-primary btn-lg" id="btn-vent">Vent</button>
+                                        <button type="button" class="btn btn-primary btn-lg" id="btn-vacuum">Pull Vacuum</button>
+                                        <button type="button" class="btn btn-primary btn-lg" id="btn-warmup">Warmup</button>
+                                        <button type="button" class="btn btn-danger btn-lg" id="btn-abort">Abort</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!--End of Control column-->
+                    </div>
+                    <div class="row">
+                        <div class="col"> <!--Power Controls-->
+                            <div class="card">
+                                <div class="card-header">Cryostat Heater Power</div>
+                                <div class="card-body contflex">
+                                    <div class="container">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="input-group">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="btn-toggle-power-schedule">
+                                                        <label class="form-check-label" for="btn-toggle-power-schedule">Enable Power Schedule</label>
+                                                        <!-- <button id="btn-toggle-power-schedule" type="button" class="btn btn-primary btn-lg" data-bs-toggle="button">Power Schedule Disabled</button> -->
+                                                    </div>
+                                                    <span class="input-group-text" for="input-heater-power">Power Limit</span>
+                                                    <input type="number" class="form-control" id="input-heater-power">
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="btn-select-power-schedule" data-bs-toggle="dropdown" aria-expanded="false">
+                                                      Select Power Schedule
+                                                    </button>
+                                                    <ul id="power-schedule-dropdown" class="dropdown-menu" aria-labelledby="btn-select-power-schedule">
+                                                      <!-- <li><a class="dropdown-item active" href="#">Default</a></li>
+                                                      <li><a class="dropdown-item" href="#">Low Power</a></li>
+                                                      <li><a class="dropdown-item" href="#">Something Else</a></li> -->
+                                                    </ul>
+                                                  </div>
+                                                <table id="power-schedule-table" class="table text-center table-bordered border-primary overflow-auto">
+                                                    <thread>
+                                                        <tr>
+                                                            <th scope="col">Temperature (K)</th>
+                                                            <th scope="col">Power (W)</th>
+                                                        </tr>
+                                                    </thread>
+                                                    <tbody>
+                                                        <!-- <tr>
+                                                            <td>3.5</td>
+                                                            <td>0.01</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>30</td>
+                                                            <td>0.5</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>50</td>
+                                                            <td>0.75</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>100</td>
+                                                            <td>1</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>130</td>
+                                                            <td>1.25</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>151</td>
+                                                            <td>1.3</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>175</td>
+                                                            <td>1.5</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>200</td>
+                                                            <td>1.75</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>260</td>
+                                                            <td>1.8</td>
+                                                        </tr> -->
+                                                    </tbody>
+                                                </table>
+                                            </div> <!--schedule col-->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- end of power controls col-->
+                        <div class="col-2"> <!--bakeout-->
+                            <div class="card">
+                                <div class="card-header">Bakeout Controls</div>
+                                <div class="card-body">
+                                    <div class="input-group">
+                                        <button id="btn-toggle-bakeout" class="btn btn-primary btn-lg" id="btn-toggle-bakeout" data-bs-toggle="button">Bakeout Disabled</button>
+                                        <span class="input-group-text" for="input-bakeout-temp">Bakeout Temp (K)</span>
+                                        <input type="number" class="form-control" id="input-bakeout-temp">
+                                        <span class="input-group-text" for="input-bakeout-time">Bakeout Time (s)</span>
+                                        <input type="number" class="form-control" id="input-bakeout-time">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6"><!--graph-->
+                            <div class="card">
+                                <div class="card-header">Temperature Graph</div>
+                                <div class="card-body">
+                                    <canvas id="chart-temperature-main" class="chart-temperature"></canvas>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="attocube" role="tabpanel">
+<!-- ~~~~~~~~~~~~~~~~~ATTOCUBE TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                <h2 class="text-center">Attocube</h2>
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">Axes Positions and Statuses</div>
+                                <div class="card-body">
+                                    <div class="card">
+                                        <div class="card-header">Axis 0</div>
+                                        <div class="card-body">
+                                            <div class="hstack">
+                                                <span class="alert alert-secondary" id="badge-axis0-pos">Position(m): 0.001816239</span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">End of Travel</span>
+                                                    <div class="hstack contflex">
+                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
+                                                        <div class="badge bg-danger">B: <i class="bi bi-exclamation-octagon-fill "></i></div>
+                                                    </div>
+                                                </div>
+                                                <span class="alert alert-warning">
+                                                    Currently Moving
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Moving...</span>
+                                                    </div>
+                                                </span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">Target: 0.004</span>
+                                                    <span class="badge bg-danger">Target Not Reached</span>
+                                                </div>
+                                            </div>
+                                            <div class="accordion" id="axis0-accordion">
+                                                <div class="accordion-item">
+                                                    <h4 class="accordion-header" id="axis0-accordion-header">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#axis0-collapse" aria-expanded="false" aria-controls="axis0-collapse">
+                                                            More Details
+                                                        </button>
+                                                    </h4>
+                                                    <div id="axis0-collapse" class="accordion-collapse collapse" aria-labelledby="axis0-accordion-header" data-bs-parent="axis0-accordion">
+                                                        <div class="accordion-body">
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Axis Name:</span>
+                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Amplitude</span>
+                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <span class="input-group-text">Frequency</span>
+                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Target Range</span>
+                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-header">Axis 1</div>
+                                        <div class="card-body">
+                                            <div class="hstack">
+                                                <span class="alert alert-secondary" id="badge-axis1-pos">Position(m): 0.001816239</span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">End of Travel</span>
+                                                    <div class="hstack contflex">
+                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
+                                                        <div class="badge bg-danger">B: <i class="bi bi-check-circle-fill"></i></div>
+                                                    </div>
+                                                </div>
+                                                <span class="alert alert-warning">
+                                                    Currently Moving
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Moving...</span>
+                                                    </div>
+                                                </span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">Target: 0.004</span>
+                                                    <span class="badge bg-success">Target Reached</span>
+                                                </div>
+                                            </div>
+                                            <div class="accordion" id="axis1-accordion">
+                                                <div class="accordion-item">
+                                                    <h4 class="accordion-header" id="axis1-accordion-header">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#axis1-collapse" aria-expanded="false" aria-controls="axis1-collapse">
+                                                            More Details
+                                                        </button>
+                                                    </h4>
+                                                    <div id="axis1-collapse" class="accordion-collapse collapse" aria-labelledby="axis1-accordion-header" data-bs-parent="axis1-accordion">
+                                                        <div class="accordion-body">
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Axis Name:</span>
+                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Amplitude</span>
+                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <span class="input-group-text">Frequency</span>
+                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Target Range</span>
+                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-header">Axis 2</div>
+                                        <div class="card-body">
+                                            <div class="hstack">
+                                                <span class="alert alert-secondary" id="badge-axis2-pos">Position(m): 0.001816239</span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">End of Travel</span>
+                                                    <div class="hstack contflex">
+                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
+                                                        <div class="badge bg-danger">B: <i class="bi bi-exclamation-octagon-fill "></i></div>
+                                                    </div>
+                                                </div>
+                                                <span class="alert alert-warning">
+                                                    Currently Moving
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Moving...</span>
+                                                    </div>
+                                                </span>
+                                                <div class="vstack">
+                                                    <span class="badge bg-secondary">Target: 0.004</span>
+                                                    <span class="badge bg-danger">Target Not Reached</span>
+                                                </div>
+                                            </div>
+                                            <div class="accordion" id="axis2-accordion">
+                                                <div class="accordion-item">
+                                                    <h4 class="accordion-header" id="axis2-accordion-header">
+                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#axis2-collapse" aria-expanded="false" aria-controls="axis2-collapse">
+                                                            More Details
+                                                        </button>
+                                                    </h4>
+                                                    <div id="axis2-collapse" class="accordion-collapse collapse" aria-labelledby="axis2-accordion-header" data-bs-parent="axis2-accordion">
+                                                        <div class="accordion-body">
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Axis Name:</span>
+                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Amplitude</span>
+                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <span class="input-group-text">Frequency</span>
+                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Target Range</span>
+                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-header">Saved Positions</div>
+                                <div class="card-body">
+                                    <h6>Test</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+        <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+        <!-- <script src="js/bootstrap/bootstrap.min.js"></script> -->
+        <script src="js/bootstrap/bootstrap-switch.min.js"></script>
+
+        <script src="js/moment.js"></script>
+        <script src="js/Chart.min.js"></script>
+
+        <script src="js/odin_control.js"></script>
+        <script src="js/attocube.js"></script>
+        <script src="js/cryostat.js"></script>
+        <!-- <script src="js/spectrometer.js"></script> -->
+
+    </body>
+</html>

@@ -8,17 +8,25 @@ body {
     padding-top: 50px;
 }
 
-.odin-server {
+.sspeci {
     padding: 40px 15px;
     text-align: center;
 }
-
+/* 
 h1 {
     color: var(--stfc-dark-blue);
 }
 
 h2 {
     color: var(--stfc-light-blue);
+} */
+
+.contflex {
+    display: flex;
+    justify-content: space-around;
 }
 
+.text-center {
+    text-align: center;
+}
 
