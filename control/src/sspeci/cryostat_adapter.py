@@ -5,7 +5,6 @@ import sys
 import os
 import json
 from urllib import response
-from xmlrpc.client import FastMarshaller
 import requests
 from requests.exceptions import ConnectionError, Timeout
 
@@ -68,6 +67,12 @@ class CryostatAdapter(ApiAdapter):
                 "power_schedules_avail": (lambda: os.listdir(self.power_schedule_directory), None),
                 "power_schedule": (lambda: self.cryo.power_lookup, None)
             },
+            "platform": {
+                "temperature": (lambda: self.cryo.platform_current_temp, None),
+                "target_temp": (lambda: self.cryo.platform_target_temp, self.cryo.set_platform_target_temp),
+                "stability": (lambda: self.cryo.temp_stabilities[3], None),
+                "heater_power": (lambda: self.cryo.heater_power[3], None)
+            },
             "system_goal": (lambda: "{}: {}".format(self.cryo.system_goal, self.cryo.system_state), None),
             "vacuum" : (lambda: self.cryo.vacuum_pressure, None),
             "bakeout": {
@@ -126,7 +131,8 @@ class CryoClient:
         "system_goal": "/controller/properties/systemGoal",
         "stage1_props": "/cooler/temperatureControllers/stage1",
         "stage2_props": "/cooler/temperatureControllers/stage2",
-        "sample_stage": "/sampleChamber/temperatureControllers/user1"
+        "sample_stage": "/sampleChamber/temperatureControllers/user1",
+        "platform": "/sampleChamber/temperatureControllers/platform"
     }
 
     def __init__(self, ip, port, schedule_dir):
@@ -148,10 +154,12 @@ class CryoClient:
         self.sample_target_temp = -1
         self.stage1_target_temp = -1
         self.stage2_target_temp = -1
+        self.platform_target_temp = -1
 
         self.sample_current_temp = -1
         self.stage1_current_temp = -1
         self.stage2_current_temp = -1
+        self.platform_current_temp = -1
 
         self.vacuum_pressure = -1
 
@@ -165,8 +173,8 @@ class CryoClient:
         self.can_vent = False
         self.can_warmup = False
 
-        self.temp_stabilities = [-1, -1, -1]
-        self.heater_power = [-1, -1, -1]
+        self.temp_stabilities = [-1, -1, -1, -1]
+        self.heater_power = [-1, -1, -1, -1]
 
         self.power_limit = -1.0
         self.user_controller_enabled = False
@@ -204,25 +212,30 @@ class CryoClient:
                 userstage_sample = self._get_prop("/".join([self.properties['sample_stage'], "thermometer/properties/sample"]), s)
                 stage1_sample    = self._get_prop("/".join([self.properties['stage1_props'], "thermometer/properties/sample"]), s)
                 stage2_sample    = self._get_prop("/".join([self.properties['stage2_props'], "thermometer/properties/sample"]), s)
+                platform_sample  = self._get_prop("/".join([self.properties['platform'],     "thermometer/properties/sample"]), s)
 
                 self.sample_current_temp = userstage_sample['temperature']
                 self.stage1_current_temp = stage1_sample['temperature']
                 self.stage2_current_temp = stage2_sample['temperature']
+                self.platform_current_temp = platform_sample['temperature']
 
                 self.temp_stabilities = [userstage_sample['temperatureStability'],
                                         stage1_sample['temperatureStability'],
-                                        stage2_sample['temperatureStability']]
+                                        stage2_sample['temperatureStability'],
+                                        platform_sample['temperatureStability']]
 
                 user_heater_sample = self._get_prop("/".join([self.properties['sample_stage'], "heater/properties/sample"]), s)
                 stage1_heater_sample = self._get_prop("/".join([self.properties['stage1_props'], "heater/properties/sample"]), s)
                 stage2_heater_sample = self._get_prop("/".join([self.properties['stage2_props'], "heater/properties/sample"]), s)
+                platform_heater_sample = self._get_prop("/".join([self.properties['platform'], "heater/properties/sample"]), s)
 
-                self.heater_power = [user_heater_sample['power'], stage1_heater_sample['power'], stage2_heater_sample['power']]
+                self.heater_power = [user_heater_sample['power'], stage1_heater_sample['power'], stage2_heater_sample['power'], platform_heater_sample['power']]
 
 
                 self.sample_target_temp = self._get_prop("/".join([self.properties['sample_stage'], "properties/targetTemperature"]), s)
                 self.stage1_target_temp = self._get_prop("/".join([self.properties['stage1_props'], "properties/targetTemperature"]), s)
                 self.stage2_target_temp = self._get_prop("/".join([self.properties['stage2_props'], "properties/targetTemperature"]), s)
+                self.platform_target_temp = self._get_prop("/".join([self.properties['platform'], "properties/targetTemperature"]), s)
 
                 self.power_limit = self._get_prop("/".join([self.properties['sample_stage'], "properties/userPowerLimit"]))
                 self.user_controller_enabled = self._get_prop("/".join([self.properties['sample_stage'], "properties/controllerEnabled"]))
@@ -308,6 +321,14 @@ class CryoClient:
 
         except (Timeout, ConnectionError):
             logging.debug("Set Target Temp Failed: ")
+
+    def set_platform_target_temp(self, value):
+        try:
+            full_addr = "/".join([self.properties['platform'], "properties/targetTemperature"])
+
+            self._set_prop(full_addr, value)
+        except (Timeout, ConnectionError):
+            logging.debug("Set platform target Temp Failed: ")
 
     #potentially dont use the stage1 & stage2 stuff, leave that on auto?
     def set_stage1_target_temp(self, value):

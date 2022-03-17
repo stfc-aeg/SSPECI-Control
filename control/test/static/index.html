@@ -83,9 +83,9 @@
                                         <div class="col">
                                             <div class="alert alert-warning" role="alert" id="cryo_connected">
                                                 <i class="bi bi-exclamation-circle-fill d-none"></i>
-                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                <!-- <div class="spinner-border spinner-border-sm" role="status">
                                                     <span class="visually-hidden">Loading</span>
-                                                </div>
+                                                </div> -->
                                                 
                                                 Cryostat Cooling
                                             </div>
@@ -122,7 +122,7 @@
                             <div class="card">
                                 <div class="card-header">Spectrometer Image</div>
                                 <div class="card-body">
-                                    <img class="img-fluid spectrometer_img" id="spec_img" src="img/fake_spectrometer_input.png" data-src="/api/0.1/spectrometer/image">
+                                    <img class="img-fluid spectrometer_img" id="spec_img" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image">
                                 </div>
                             </div>
                         </div>
@@ -144,7 +144,7 @@
                 <div class="container-fluid">
                     <div class="row contflex"> <!-- status and control row -->
                         <div class="col">
-                            <img class="img-fluid spectrometer_img" id="spec_img_2" src="img/fake_spectrometer_input.png" data-src="/api/0.1/spectrometer/image">
+                            <img class="img-fluid spectrometer_img" id="spec_img_2" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image">
                         </div>
                         <div class="col-5">
                             <div class="card">
@@ -239,7 +239,6 @@
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" id="btn-toggle-power-schedule">
                                                         <label class="form-check-label" for="btn-toggle-power-schedule">Enable Power Schedule</label>
-                                                        <!-- <button id="btn-toggle-power-schedule" type="button" class="btn btn-primary btn-lg" data-bs-toggle="button">Power Schedule Disabled</button> -->
                                                     </div>
                                                     <span class="input-group-text" for="input-heater-power">Power Limit</span>
                                                     <input type="number" class="form-control" id="input-heater-power">
@@ -251,9 +250,6 @@
                                                       Select Power Schedule
                                                     </button>
                                                     <ul id="power-schedule-dropdown" class="dropdown-menu" aria-labelledby="btn-select-power-schedule">
-                                                      <!-- <li><a class="dropdown-item active" href="#">Default</a></li>
-                                                      <li><a class="dropdown-item" href="#">Low Power</a></li>
-                                                      <li><a class="dropdown-item" href="#">Something Else</a></li> -->
                                                     </ul>
                                                   </div>
                                                 <table id="power-schedule-table" class="table text-center table-bordered border-primary overflow-auto">
@@ -264,42 +260,6 @@
                                                         </tr>
                                                     </thread>
                                                     <tbody>
-                                                        <!-- <tr>
-                                                            <td>3.5</td>
-                                                            <td>0.01</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>30</td>
-                                                            <td>0.5</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>50</td>
-                                                            <td>0.75</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>100</td>
-                                                            <td>1</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>130</td>
-                                                            <td>1.25</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>151</td>
-                                                            <td>1.3</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>175</td>
-                                                            <td>1.5</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>200</td>
-                                                            <td>1.75</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>260</td>
-                                                            <td>1.8</td>
-                                                        </tr> -->
                                                     </tbody>
                                                 </table>
                                             </div> <!--schedule col-->
@@ -313,12 +273,43 @@
                                 <div class="card-header">Bakeout Controls</div>
                                 <div class="card-body">
                                     <div class="input-group">
-                                        <button id="btn-toggle-bakeout" class="btn btn-primary btn-lg" id="btn-toggle-bakeout" data-bs-toggle="button">Bakeout Disabled</button>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="btn-toggle-bakeout">
+                                            <label class="form-check-label" for="btn-toggle-bakeout">Enable Bakeout</label>
+                                        </div>
+                                        <!-- <button id="btn-toggle-bakeout" class="btn btn-primary btn-lg" id="btn-toggle-bakeout" data-bs-toggle="button">Bakeout Disabled</button> -->
                                         <span class="input-group-text" for="input-bakeout-temp">Bakeout Temp (K)</span>
                                         <input type="number" class="form-control" id="input-bakeout-temp">
                                         <span class="input-group-text" for="input-bakeout-time">Bakeout Time (s)</span>
                                         <input type="number" class="form-control" id="input-bakeout-time">
                                     </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">Target Temperatures</div>
+                                <div class="card-body">
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-atsm-target">ATSM Target</span>
+                                        <input type="number" class="form-control" id="input-atsm-target">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-platform-target">Platform Target</span>
+                                        <input type="number" class="form-control" id="input-platform-target">
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-stage1-target">Stage 1 Target</span>
+                                        <input type="number" class="form-control" id="input-stage1-target" readonly>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-stage2-target">Stage 2 Target</span>
+                                        <input type="number" class="form-control" id="input-stage2-target" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">Sample Chamber Pressure</div>
+                                <div class="card-body">
+                                    <div id="alert-vacuum-pressure" class="alert alert-danger text-center">N/A</div>
                                 </div>
                             </div>
                         </div>

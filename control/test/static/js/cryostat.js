@@ -9,6 +9,7 @@ class CryostatAdapter extends AdapterEndpoint
         this.atsm_temps = []
         this.stage1_temps = []
         this.stage2_temps = []
+        this.platform_temps = []
         this.temp_timestamps = []
         this.temp_charts = []
 
@@ -31,12 +32,22 @@ class CryostatAdapter extends AdapterEndpoint
         this.element_input_bakeout_time = document.getElementById("input-bakeout-time");
         this.bakeout_enabled = false;
 
-        this.element_btn_bakeout.addEventListener("click", () => this.toggle_bakeout());
+        this.element_btn_bakeout.addEventListener("change", () => this.toggle_bakeout());
         this.element_input_bakeout_temp.addEventListener("change", (e) => this.change_bakeout_temp(e));
         this.element_input_bakeout_time.addEventListener("change", (e) => this.change_bakeout_time(e));
 
         this.element_btn_enable_pwr_schedule.addEventListener("change", () => this.toggle_power_schedule());
-        this.element_input_heater_power.addEventListener("change", (e) => this.change_power_limit(e))
+        this.element_input_heater_power.addEventListener("change", (e) => this.change_power_limit(e));
+
+        this.element_input_atsm_target = document.getElementById("input-atsm-target");
+        this.element_input_platform_target = document.getElementById("input-platform-target");
+        this.element_input_stage1_target = document.getElementById("input-stage1-target");
+        this.element_input_stage2_target = document.getElementById("input-stage2-target");
+        
+        this.element_input_atsm_target.addEventListener("change", (e) => this.change_temp_target(e));
+        this.element_input_platform_target.addEventListener("change", (e) => this.change_temp_target(e));
+
+        this.element_pressure_label = document.getElementById("alert-vacuum-pressure");
 
         this.element_btn_abort.addEventListener("click", () => this.abort_clicked());
         this.element_btn_cooldown.addEventListener("click", () => this.cooldown_clicked());
@@ -60,13 +71,7 @@ class CryostatAdapter extends AdapterEndpoint
             this.element_input_bakeout_temp.value = response.bakeout.temperature;
             this.element_input_bakeout_time.value = response.bakeout.time;
             this.bakeout_enabled = response.bakeout.enabled;
-            if(this.bakeout_enabled == true)
-            {
-                this.element_btn_bakeout.innerHTML = "Bakeout Enabled";
-            }else
-            {
-                this.element_btn_bakeout.innerHTML = "Bakeout Disabled";
-            }
+            this.element_btn_bakeout.checked = this.bakeout_enabled;
 
             var avail_schedules = response.atsm.power_schedules_avail;
             console.log(avail_schedules);
@@ -90,7 +95,27 @@ class CryostatAdapter extends AdapterEndpoint
             });
             this.construct_schedule_table();
             this.element_btn_enable_pwr_schedule.checked = response.atsm.power_schedule_enabled;
+
+            this.element_input_atsm_target.value = response.atsm.target_temp;
+            this.element_input_platform_target.value = response.platform.target_temp;
+            this.element_input_stage1_target.value = response.stage1.target_temp;
+            this.element_input_stage2_target.value = response.stage2.target_temp;
         });
+    }
+
+    change_temp_target(event)
+    {
+        var path = ""
+        if(event.target == self.element_input_atsm_target)
+        {
+            path = "atsm";
+        }
+        else
+        {
+            path = "platform";
+        }
+
+        this.put({"target_temp":parseFloat(event.target.value)}, path);
     }
 
     construct_schedule_table()
@@ -149,13 +174,13 @@ class CryostatAdapter extends AdapterEndpoint
     {
         this.bakeout_enabled = !this.bakeout_enabled;
         this.put({"enabled": this.bakeout_enabled}, "bakeout");
-        if(this.bakeout_enabled == true)
-        {
-            this.element_btn_bakeout.innerHTML = "Bakeout Enabled";
-        }else
-        {
-            this.element_btn_bakeout.innerHTML = "Bakeout Disabled";
-        }
+        // if(this.bakeout_enabled == true)
+        // {
+        //     this.element_btn_bakeout.innerHTML = "Bakeout Enabled";
+        // }else
+        // {
+        //     this.element_btn_bakeout.innerHTML = "Bakeout Disabled";
+        // }
 
     }
 
@@ -229,36 +254,59 @@ class CryostatAdapter extends AdapterEndpoint
                         pointHoverRadius: 15
                     },
                     {
-                        label: "Stage 1",
-                        data: this.stage1_temps,
-                        borderColor:["rgba(0,255,0,1)"],
-                        backgroundColor:['rgba(0, 255, 0, 0.1)'],
-                        pointStyle: "crossRot",
-                        pointRadius: 10,
-                        pointHoverRadius: 15
-                    },
-                    {
-                        label: "Stage 2",
-                        data: this.stage2_temps,
-                        borderColor:["rgba(0,0,255,1)"],
-                        backgroundColor:['rgba(0, 0, 255, 0.1)'],
+                        label: "Platform",
+                        data: this.platform_temps,
+                        borderColor:['rgba(0, 0, 255, 1)'],
+                        backgroundColor: ['rgba(0, 0, 255, 0.1)'],
+                        spanGaps: false,
                         pointStyle: "rectRot",
                         pointRadius: 10,
                         pointHoverRadius: 15
                     }
+                    // {
+                    //     label: "Stage 1",
+                    //     data: this.stage1_temps,
+                    //     borderColor:["rgba(0,255,0,1)"],
+                    //     backgroundColor:['rgba(0, 255, 0, 0.1)'],
+                    //     pointStyle: "crossRot",
+                    //     pointRadius: 10,
+                    //     pointHoverRadius: 15
+                    // },
+                    // {
+                    //     label: "Stage 2",
+                    //     data: this.stage2_temps,
+                    //     borderColor:["rgba(0,0,255,1)"],
+                    //     backgroundColor:['rgba(0, 0, 255, 0.1)'],
+                    //     pointStyle: "rectRot",
+                    //     pointRadius: 10,
+                    //     pointHoverRadius: 15
+                    // }
                     ]
                 },
                 options: {
                     responsive: true,
+                    interaction: {
+                        intersect: false,
+                        mode: "index",
+                    },
                     // animation: true,
                     scales: {
-                        y: {
+                        yAxes: [{
+                            title: {
+                                display: true,
+                                text: "Temperature (K)"
+                            },
                             ticks: {
-                                stepSize: 1
+                                // min: 0,
+                                // max: 300,
+                                stepSize: 2
                             }
-                        },
+                        }],
                         x: {
-                            // type: 'time',
+                            title: {
+                                display: true,
+                                text: "Time"
+                            },
                             distribution: 'linear',
                             ticks: {
                                 source: "data"
@@ -268,8 +316,8 @@ class CryostatAdapter extends AdapterEndpoint
                     plugins: {
                         legend: {
                             labels: {
-                                usePointStyle: true
-                            }
+                                usePointStyle: true,
+                            },
                         }
                     }
                 }
@@ -277,7 +325,7 @@ class CryostatAdapter extends AdapterEndpoint
         this.temp_charts.push(chart_temps);
     }
 
-    update_temperatures(atsm_temp, stage1_temp, stage2_temp)
+    update_temperatures(atsm_temp, stage1_temp, stage2_temp, platform_temp)
     {
         var max_length = 20;
 
@@ -292,6 +340,8 @@ class CryostatAdapter extends AdapterEndpoint
         if(this.stage1_temps.length > max_length) this.stage1_temps.shift();
         this.stage2_temps.push(stage2_temp);
         if(this.stage2_temps.length > max_length) this.stage2_temps.shift();
+        this.platform_temps.push(platform_temp);
+        if(this.platform_temps.length > max_length) this.platform_temps.shift();
 
         var time = new Date();
         this.temp_timestamps.push(time.toLocaleTimeString("en-UK"));
@@ -367,7 +417,7 @@ class CryostatAdapter extends AdapterEndpoint
                 this.element_state_label.classList.add("alert-warning");
                 break;
             case "BakeoutPreheating":
-                this.element_state_label.innerHTML = this.icons["info"] + " State: Bakeout Preheating";
+                this.element_state_label.innerHTML = this.icons["therm_sun"] + " State: Bakeout Preheating";
                 this.element_state_label.classList.add("alert-warning");
                 break;
             case "BakingOut":
@@ -448,8 +498,9 @@ class CryostatAdapter extends AdapterEndpoint
             var atsm_temp = response.atsm.temperature.toFixed(5);
             var stage1_temp = response.stage1.temperature.toFixed(5);
             var stage2_temp = response.stage2.temperature.toFixed(5);
+            var platform_temp = response.platform.temperature.toFixed(5);
 
-            this.update_temperatures(atsm_temp, stage1_temp, stage2_temp);
+            this.update_temperatures(atsm_temp, stage1_temp, stage2_temp, platform_temp);
 
             var system_goal_string = response.system_goal;
             this.update_status(system_goal_string);
@@ -465,6 +516,24 @@ class CryostatAdapter extends AdapterEndpoint
             var power_limit = response.atsm.power_limit;
             this.update_pwr_schedule(power_limit);
 
+            // this.element_input_atsm_target.value = response.atsm.target_temp;
+            // this.element_input_platform_target.value = response.platform.target_temp;
+            this.element_input_stage1_target.value = response.stage1.target_temp;
+            this.element_input_stage2_target.value = response.stage2.target_temp;
+
+            var pressure = response.vacuum.toFixed(8);
+            if(pressure < 50) //TODO: arbitary value, ask Sion what might be a valid pressure for this
+            {
+                this.element_pressure_label.innerHTML = this.icons["check"] + " " + pressure + " Pascals";
+                this.element_pressure_label.classList.remove("alert-danger");
+                this.element_pressure_label.classList.add("alert-success");
+            }
+            else
+            {
+                this.element_pressure_label.innerHTML = this.icons["exclaim"] + " " + pressure + " Pascals";
+                this.element_pressure_label.classList.remove("alert-success");
+                this.element_pressure_label.classList.add("alert-danger");
+            }
         })
 
         setTimeout(() => this.poll_loop(), 1000);
