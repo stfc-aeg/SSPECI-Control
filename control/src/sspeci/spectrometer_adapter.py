@@ -36,7 +36,7 @@ class SpectrometerAdapter(ApiAdapter):
         self.endpoint = self.options.get("endpoint", "tcp://127.0.0.1:4242")
 
         # try:
-        self.client = zerorpc.Client(timeout=1)
+        self.client = zerorpc.Client(timeout=5)
         # self.client.debug = True
         self.client.connect(self.endpoint)
 

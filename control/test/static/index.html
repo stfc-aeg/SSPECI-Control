@@ -81,12 +81,8 @@
                                             </div>
                                         </div>
                                         <div class="col">
-                                            <div class="alert alert-warning" role="alert" id="cryo_connected">
+                                            <div class="alert alert-warning" role="alert" id="main-cryo-connected">
                                                 <i class="bi bi-exclamation-circle-fill d-none"></i>
-                                                <!-- <div class="spinner-border spinner-border-sm" role="status">
-                                                    <span class="visually-hidden">Loading</span>
-                                                </div> -->
-                                                
                                                 Cryostat Cooling
                                             </div>
                                         </div>
@@ -143,17 +139,26 @@
 
                 <div class="container-fluid">
                     <div class="row contflex"> <!-- status and control row -->
-                        <div class="col">
+                        <div class="col text-center">
                             <img class="img-fluid spectrometer_img" id="spec_img_2" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image">
                         </div>
-                        <div class="col-5">
+                        <div class="col">
                             <div class="card">
-                                <div class="card-header">
-                                    Spectrometer Settings
+                                <div class="card-header">Spectrometer Controls</div>
+                                <div class="card-body">
+                                    <button type="button" class="btn btn-primary btn-lg" id="btn-start_lightfield">Start Lightfield</button>
+                                    <button type="button" class="btn btn-primary btn-lg" id="btn-start-acquisition">Start Acquisition</button>
+                                    <div class="input-group">
+                                        <span class="input-group-text" for="input-frame-num">Number of Frames</span>
+                                        <input type="number" class="form-control" id="input-frame-num">
+                                    </div>
                                 </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">Spectrometer Settings</div>
                                 <div class="card-body">
                                     <div class="btn-group" role="group" aria-label="Binning Controls">
-                                        <input type="radio" class="btn-check" name="btnradio" id="btnBinFull" autocomplete="off" checked value="FullSensor">
+                                        <input type="radio" class="btn-check" name="btnradio" id="btnBinFull" autocomplete="off" value="FullSensor">
                                         <label class="btn btn-outline-primary" for="btnBinFull">Full Sensor</label>
                                         <input type="radio" class="btn-check" name="btnradio" id="btnBin" autocomplete="off" value="BinnedSensor">
                                         <label class="btn btn-outline-primary" for="btnBin">Full Sensor (Binned)</label>
@@ -165,12 +170,17 @@
                                         <input type="number" class="form-control" id="input-bin-rows">
                                         <span class="input-group-text" for="input-bin-cols">Column Bin Size</span>
                                         <input type="number" class="form-control" id="input-bin-cols">
+                                    </div>
+                                    <div class="input-group">
                                         <span class="input-group-text" for="input-bin-line">Line Bin Count</span>
                                         <input type="number" class="form-control" id="input-bin-line">
                                     </div>
+                                    <br>
                                     <div class="input-group">
                                         <span class="input-group-text" for="input-camera-exposure">Exposure</span>
-                                        <input type="number" class="form-control" id="input-camera-explosure">
+                                        <input type="number" class="form-control" id="input-camera-exposure">
+                                    </div>
+                                    <div class="input-group">
                                         <span class="input-group-text" for="input-camera-wavelength">Centre Wavelength</span>
                                         <input type="number" class="form-control" id="input-camera-wavelength">
                                     </div>
@@ -516,6 +526,7 @@
         <script src="js/Chart.min.js"></script>
 
         <script src="js/odin_control.js"></script>
+        <script src="js/spectrometer.js"></script>
         <script src="js/attocube.js"></script>
         <script src="js/cryostat.js"></script>
         <!-- <script src="js/spectrometer.js"></script> -->

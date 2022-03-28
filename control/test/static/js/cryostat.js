@@ -65,6 +65,7 @@ class CryostatAdapter extends AdapterEndpoint
         }
 
         this.element_schedule_dropdown = document.getElementById("power-schedule-dropdown");
+        this.element_main_cryo_label = document.getElementById("main-cryo-connected");
 
         this.get()
         .then(response => {
@@ -105,8 +106,9 @@ class CryostatAdapter extends AdapterEndpoint
 
     change_temp_target(event)
     {
+
         var path = ""
-        if(event.target == self.element_input_atsm_target)
+        if(event.target == this.element_input_atsm_target)
         {
             path = "atsm";
         }
@@ -114,7 +116,7 @@ class CryostatAdapter extends AdapterEndpoint
         {
             path = "platform";
         }
-
+        console.log(path + " target temp: " + event.target.value);
         this.put({"target_temp":parseFloat(event.target.value)}, path);
     }
 
@@ -366,10 +368,12 @@ class CryostatAdapter extends AdapterEndpoint
 
         this.removeClassByPrefix(this.element_goal_label, 'alert-');
         this.removeClassByPrefix(this.element_state_label, 'alert-');
+        this.removeClassByPrefix(this.element_main_cryo_label, 'alert-');
         switch(goal){
             case "None":
                 this.element_goal_label.innerHTML = this.icons["check"] + " Goal: None";
                 this.element_goal_label.classList.add("alert-success");
+
                 break;
             case "PullVacuum":
                 this.element_goal_label.innerHTML = this.icons["info"] + " Goal: Pull Vacuum";
@@ -389,10 +393,13 @@ class CryostatAdapter extends AdapterEndpoint
                 break;
             case "UNKNOWN":
             default:
-                this.element_goal_label.innerHTML = this.icons["exclaim"] + " Goal: Unknown";                
+                this.element_goal_label.innerHTML = this.icons["exclaim"] + " Goal: Unknown";
                 this.element_goal_label.classList.add("alert-danger");
                 break;
         }
+
+        this.element_main_cryo_label.innerHTML = this.element_goal_label.innerHTML.replace("Goal", "Cryo Status");
+        this.element_main_cryo_label.classList = this.element_goal_label.classList;
 
         switch(state){
             case "Idle":
