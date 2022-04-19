@@ -355,12 +355,6 @@ class CryostatAdapter extends AdapterEndpoint
         }
     }
 
-    removeClassByPrefix(node, prefix) {
-        var regx = new RegExp('\\b' + prefix + '[^ ]*[ ]?\\b', 'g');
-        node.className = node.className.replace(regx, '');
-        return node;
-    }
-
     update_status(system_goal_string)
     {
         var goal = system_goal_string.split(":")[0].trim();

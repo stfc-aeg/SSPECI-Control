@@ -11,6 +11,7 @@ import psutil
 import threading
 import signal
 import time
+import argparse
 # import numpy as np
 from array import array
 # from System.IO import *
@@ -64,9 +65,9 @@ class APIController:
                 logging.debug("Lingering Process found, ending before starting new process")
                 process.kill()
         
-        # self._start_in_thread(visible)
-        t = threading.Thread(target=self._start_in_thread, args=[visible])
-        t.start()
+        self._start_in_thread(visible)
+        # t = threading.Thread(target=self._start_in_thread, args=[visible])
+        # t.start()
         logging.debug("Lightfield starting in thread")
 
     def _start_in_thread(self, visible):
@@ -75,8 +76,8 @@ class APIController:
         command_list = List[String]()
         # ensures it does not automatically load an experiment
         command_list.Add("/empty")
-
-        self.application = Automation(visible, List[String](command_list))
+        logging.debug("STARTING AUTOMATION")
+        self.application = Automation(visible, List[String]())
         logging.debug("Lightfield Started")
 
         self.experiment = self.application.LightFieldApplication.Experiment
@@ -269,12 +270,18 @@ class RPCServer:
         self.api = APIController()
 
         # handle ctrl-c closing properly
-        signal.signal(signal.SIGINT, self._signal_handler)
+        # signal.signal(signal.SIGINT, self._signal_handler)
 
-    def _signal_handler(self, sig, frame):
-        logging.debug("Shutting Down")
+    # def _signal_handler(self, sig, frame):
+    #     logging.debug("Shutting Down")
+    #     self.api.close_lightfield()
+    #     sys.exit(0)
+
+    def __del__(self):
         self.api.close_lightfield()
-        sys.exit(0)
+
+    def close_server(self):
+        self.api.close_lightfield()
 
     def start_lightfield(self, visible):
         """ 
@@ -427,7 +434,23 @@ class RPCServer:
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--addr", default="192.168.0.102", help="Enter the RPC server IP address")
+    parser.add_argument("--port", default="4242", help="Enter the RPC Server Port")
+    args = parser.parse_args()
+
+    server_addr_string = "tcp://{addr}:{port}".format(addr=args.addr, port=args.port)
+    logging.debug(server_addr_string)
     server = zerorpc.Server(RPCServer())
 
-    server.bind("tcp://0.0.0.0:4242")
+    server.bind(server_addr_string)
     server.run()
+
+else:
+    logging.basicConfig(
+        filename="c:\\Temp\\sspeci-service.log",
+        filemode='w',
+        level=logging.DEBUG,
+        datefmt='%H:%M:%S',
+        format='%(asctime)s %(levelname)-8s %(message)s'
+    )

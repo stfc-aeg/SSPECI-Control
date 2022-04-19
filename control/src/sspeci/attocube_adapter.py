@@ -38,12 +38,12 @@ class StageAdapter(ApiAdapter):
             self.controller.setTargetRange(i, range)
 
         self.param_tree = ParameterTree({
-            "is_connected": (None, None),
             "axis_0": self.create_axis_tree(0),
             "axis_1": self.create_axis_tree(1),
             "axis_2": self.create_axis_tree(2),
             "load_position": (None, self.load_position),
-            "save_position": (None, self.save_position)
+            "save_position": (None, self.save_position),
+            "position_files": (lambda: os.listdir(self.saved_position_directory), None)
             
         })
 

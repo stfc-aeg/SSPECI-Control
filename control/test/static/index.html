@@ -348,23 +348,20 @@
                                         <div class="card-header">Axis 0</div>
                                         <div class="card-body">
                                             <div class="hstack">
-                                                <span class="alert alert-secondary" id="badge-axis0-pos">Position(m): 0.001816239</span>
+                                                <span class="alert alert-secondary" id="badge-axis0-pos">Position(m): N/A</span>
                                                 <div class="vstack">
                                                     <span class="badge bg-secondary">End of Travel</span>
                                                     <div class="hstack contflex">
-                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
-                                                        <div class="badge bg-danger">B: <i class="bi bi-exclamation-octagon-fill "></i></div>
+                                                        <div class="badge bg-warning" id="badge-axis0-EoTF">Front:</div>
+                                                        <div class="badge bg-warning" id="badge-axis0-EoTB">Back:</div>
                                                     </div>
                                                 </div>
-                                                <span class="alert alert-warning">
-                                                    Currently Moving
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Moving...</span>
-                                                    </div>
+                                                <span id="axis0-is-moving" class="alert alert-warning">
+                                                    UNKNOWN STATUS
                                                 </span>
                                                 <div class="vstack">
-                                                    <span class="badge bg-secondary">Target: 0.004</span>
-                                                    <span class="badge bg-danger">Target Not Reached</span>
+                                                    <span class="badge bg-secondary" id="badge-axis0-target">Target: N/A</span>
+                                                    <span class="badge bg-danger" id="badge-axis0-target-reached">Target Not Reached</span>
                                                 </div>
                                             </div>
                                             <div class="accordion" id="axis0-accordion">
@@ -378,17 +375,17 @@
                                                         <div class="accordion-body">
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Axis Name:</span>
-                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                                <input type="text" id="axis0-axis-name" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Amplitude</span>
-                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <input type="number" id="axis0-amplitude" class="form-control" value="UNKNOWN" readonly>
                                                                 <span class="input-group-text">Frequency</span>
-                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                                <input type="number" id="axis0-frequency" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Target Range</span>
-                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                                <input type="number" id="axis0-target-range" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -400,23 +397,20 @@
                                         <div class="card-header">Axis 1</div>
                                         <div class="card-body">
                                             <div class="hstack">
-                                                <span class="alert alert-secondary" id="badge-axis1-pos">Position(m): 0.001816239</span>
+                                                <span class="alert alert-secondary" id="badge-axis1-pos">Position(m): N/A</span>
                                                 <div class="vstack">
                                                     <span class="badge bg-secondary">End of Travel</span>
                                                     <div class="hstack contflex">
-                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
-                                                        <div class="badge bg-danger">B: <i class="bi bi-check-circle-fill"></i></div>
+                                                        <div class="badge bg-warning" id="badge-axis1-EoTF">Front:</div>
+                                                        <div class="badge bg-warning" id="badge-axis1-EoTB">Back:</div>
                                                     </div>
                                                 </div>
-                                                <span class="alert alert-warning">
-                                                    Currently Moving
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Moving...</span>
-                                                    </div>
+                                                <span id="axis1-is-moving" class="alert alert-warning">
+                                                    UNKNOWN STATUS
                                                 </span>
                                                 <div class="vstack">
-                                                    <span class="badge bg-secondary">Target: 0.004</span>
-                                                    <span class="badge bg-success">Target Reached</span>
+                                                    <span class="badge bg-secondary" id="badge-axis1-target">Target: N/A</span>
+                                                    <span class="badge bg-danger" id="badge-axis1-target-reached">Target Not Reached</span>
                                                 </div>
                                             </div>
                                             <div class="accordion" id="axis1-accordion">
@@ -430,17 +424,17 @@
                                                         <div class="accordion-body">
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Axis Name:</span>
-                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                                <input type="text" id="axis1-axis-name" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Amplitude</span>
-                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <input type="number" id="axis1-amplitude" class="form-control" value="UNKNOWN" readonly>
                                                                 <span class="input-group-text">Frequency</span>
-                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                                <input type="number" id="axis1-frequency" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Target Range</span>
-                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                                <input type="number" id="axis1-target-range" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -452,23 +446,20 @@
                                         <div class="card-header">Axis 2</div>
                                         <div class="card-body">
                                             <div class="hstack">
-                                                <span class="alert alert-secondary" id="badge-axis2-pos">Position(m): 0.001816239</span>
+                                                <span class="alert alert-secondary" id="badge-axis2-pos">Position(m): N/A</span>
                                                 <div class="vstack">
                                                     <span class="badge bg-secondary">End of Travel</span>
                                                     <div class="hstack contflex">
-                                                        <div class="badge bg-success">F: <i class="bi bi-check-circle-fill"></i></div>
-                                                        <div class="badge bg-danger">B: <i class="bi bi-exclamation-octagon-fill "></i></div>
+                                                        <div class="badge bg-warning" id="badge-axis2-EoTF">Front:</div>
+                                                        <div class="badge bg-warning" id="badge-axis2-EoTB">Back:</div>
                                                     </div>
                                                 </div>
-                                                <span class="alert alert-warning">
-                                                    Currently Moving
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Moving...</span>
-                                                    </div>
+                                                <span id="axis2-is-moving" class="alert alert-warning">
+                                                    UNKNOWN STATUS
                                                 </span>
                                                 <div class="vstack">
-                                                    <span class="badge bg-secondary">Target: 0.004</span>
-                                                    <span class="badge bg-danger">Target Not Reached</span>
+                                                    <span class="badge bg-secondary" id="badge-axis2-target">Target: N/A</span>
+                                                    <span class="badge bg-danger" id="badge-axis2-target-reached">Target Not Reached</span>
                                                 </div>
                                             </div>
                                             <div class="accordion" id="axis2-accordion">
@@ -482,17 +473,17 @@
                                                         <div class="accordion-body">
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Axis Name:</span>
-                                                                <input type="text" class="form-control" value="ANPz102" readonly>
+                                                                <input type="text" id="axis2-axis-name" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Amplitude</span>
-                                                                <input type="number" class="form-control" value="30" readonly>
+                                                                <input type="number" id="axis2-amplitude" class="form-control" value="UNKNOWN" readonly>
                                                                 <span class="input-group-text">Frequency</span>
-                                                                <input type="number" class="form-control" value="1000" readonly>
+                                                                <input type="number" id="axis2-frequency" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                             <div class="input-group">
                                                                 <span class="input-group-text">Target Range</span>
-                                                                <input type="number" class="form-control" value="1e-6" readonly>
+                                                                <input type="number" id="axis2-target-range" class="form-control" value="UNKNOWN" readonly>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -507,7 +498,40 @@
                             <div class="card">
                                 <div class="card-header">Saved Positions</div>
                                 <div class="card-body">
-                                    <h6>Test</h6>
+                                    <div class="container">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="btn-select-position-file" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Select Saved Position
+                                                    </button>
+                                                    <ul id="position-file-dropdown" class="dropdown-menu" aria-labelledby="btn-select-position-file"> 
+                                                    </ul>
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Axis 0:</span>
+                                                    <span class="input-group-text">Target Position</span>
+                                                    <input type="number" id="input-axis0-save-position" class="form-control">
+                                                    <span class="input-group-text">Target Range</span>
+                                                    <input type="number" id="input-axis0-save-range" class="form-control">
+                                               </div>
+                                               <div class="input-group">
+                                                    <span class="input-group-text">Axis 1:</span>
+                                                    <span class="input-group-text">Target Position</span>
+                                                    <input type="number" id="input-axis1-save-position" class="form-control">
+                                                    <span class="input-group-text">Target Range</span>
+                                                    <input type="number" id="input-axis1-save-range" class="form-control">
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Axis 2:</span>
+                                                    <span class="input-group-text">Target Position</span>
+                                                    <input type="number" id="input-axis2-save-position" class="form-control">
+                                                    <span class="input-group-text">Target Range</span>
+                                                    <input type="number" id="input-axis2-save-range" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

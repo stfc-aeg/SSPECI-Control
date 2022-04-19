@@ -1,0 +1,5 @@
+control/test/static/css/bootstrap/*
+control/test/static/css/fontawesome/*
+control/test/static/js/bootstrap/*
+*.egg-info
+*.pyc
