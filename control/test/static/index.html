@@ -186,6 +186,44 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="card">
+                                <div class="card-header">Experiment Settings</div>
+                                <div class="card-body">
+                                    <div class="input-group">
+                                        <div class="dropdown">
+                                            <button class="btn btn-primary dropdown-toggle" type="button" id="btn-select-experiement-file" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Load Settings
+                                            </button>
+                                            <ul id="experiment-file-dropdown" class="dropdown-menu" aria-labelledby="btn-select-experiment-file">
+                                            </ul>
+                                        </div>
+                                        <button class="btn btn-primary" type="button" id="btn-save-experiment" data-bs-toggle="modal" data-bs-target="#modal-save-experiment">
+                                            Save Current Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--SAVE FILE MODAL-->
+                            <div class="modal fade" id="modal-save-experiment" tabindex="-1" aria-labelledby="modal_label" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modal_label">Save Experiement Settings</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="input-group">
+                                                <span class="input-group-text" for="input-experiment-file-name">File Name</span>
+                                                <input type="text" class="form-control" id="input-experiment-file-name">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary" id="btn-save-experiment-file">Save File</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

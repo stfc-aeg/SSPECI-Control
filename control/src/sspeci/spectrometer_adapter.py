@@ -56,6 +56,12 @@ class SpectrometerAdapter(ApiAdapter):
             {
                 "exposure": (self.get_exposure, self.set_exposure),
                 "centre_wavelength": (self.get_centre_wavelength, self.set_centre_wavelength)
+            },
+            "experiments":
+            {
+                "list_experiments": (self.get_experiments, None),
+                "save_experiment": (None, self.save_experiment),
+                "load_experiment": (None, self.load_experiment)
             }
         })
         # except (LostRemote, TimeoutExpired) as remote_err:
@@ -245,5 +251,23 @@ class SpectrometerAdapter(ApiAdapter):
     def set_centre_wavelength(self, value):
         try:
             self.client.set_centre_wavelength(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def get_experiments(self):
+        try:
+            return self.client.get_experiments()
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def load_experiment(self, value):
+        try:
+            self.client.load_experiment(value)
+        except (LostRemote, TimeoutExpired) as remote_err:
+            logging.error("Remote Error: %s", remote_err)
+
+    def save_experiment(self, value):
+        try:
+            self.client.save_experiment(value)
         except (LostRemote, TimeoutExpired) as remote_err:
             logging.error("Remote Error: %s", remote_err)

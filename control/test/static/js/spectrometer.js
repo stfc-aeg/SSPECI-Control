@@ -24,6 +24,13 @@ class SpectrometerAdapter extends AdapterEndpoint
 
         this.ele_spec_img = document.getElementById("spec_img_2");
         this.ele_spec_img_main = document.getElementById("spec_img");
+
+        this.ele_load_experi_drop_btn = document.getElementById("btn-select-experiement-file");
+        this.ele_experi_drop_list = document.getElementById("experiment-file-dropdown");
+
+        this.ele_save_experi_input = document.getElementById("input-experiment-file-name");
+        this.ele_save_experi_btn = document.getElementById("btn-save-experiment-file");
+
         
         this.ele_btn_bin_full.addEventListener("click", (e) => this.bin_button_clicked(e));
         this.ele_btn_bin_binned.addEventListener("click", (e) => this.bin_button_clicked(e));
@@ -38,10 +45,23 @@ class SpectrometerAdapter extends AdapterEndpoint
 
         this.ele_btn_start_acq.addEventListener("click", () => this.start_acquisition());
 
+        this.ele_save_experi_btn.addEventListener("click", () => this.save_experiment_clicked());
+
+        this.avail_experiment_files = [];
 
         this.get("")
         .then(response => {
-            var bin_type = response.binning.binning_mode;
+            this.set_experiment_values(response)
+
+            this.avail_experiment_files = response.experiments.list_experiments;
+            this.populate_experiment_dropdown(this.avail_experiment_files);
+        });
+        this.img_refresh_loop();
+    }
+
+    set_experiment_values(response)
+    {
+        var bin_type = response.binning.binning_mode;
             switch(bin_type){
                 case "FullSensor": this.ele_btn_bin_full.checked = true; break;
                 case "BinnedSensor": this.ele_btn_bin_binned.checked = true; break;
@@ -54,8 +74,6 @@ class SpectrometerAdapter extends AdapterEndpoint
 
             this.ele_input_cam_exposure.value = response.acquisition.exposure;
             this.ele_input_cam_wavelength.value = response.acquisition.centre_wavelength;
-        });
-        this.img_refresh_loop();
     }
 
     start_acquisition(){
@@ -70,6 +88,56 @@ class SpectrometerAdapter extends AdapterEndpoint
         this.ele_spec_img_main.setAttribute("src", this.ele_spec_img.getAttribute("data-src") + '?' + img_start_time);
         // console.log("Image Updated");
         setTimeout(() => this.img_refresh_loop(), 1000);
+    }
+
+    populate_experiment_dropdown(experiment_list)
+    {
+        this.ele_experi_drop_list.innerHTML = "";  // clear the dropdown to avoid duplicates
+        experiment_list.forEach(element => {
+
+            var option = document.createElement("li");
+            var option_link = document.createElement("a");
+            option_link.href = "#";
+            option_link.className = "dropdown-item";
+            option_link.textContent = element;
+            option_link.value = element;
+
+            option.appendChild(option_link);
+            this.ele_experi_drop_list.appendChild(option);
+
+            option_link.addEventListener("click", event => this.load_experiment_clicked(event));
+        });
+    }
+
+    load_experiment_clicked(event)
+    {
+        console.log("Load Experiment clicked: " + event.target.value);
+        this.put({"load_experiment": event.target.value}, "experiments");
+        this.ele_save_experi_input.value = event.target.value;
+        this.get("")
+        .then(response => this.set_experiment_values(response));
+
+    }
+
+    save_experiment_clicked()
+    {
+        console.log("Save Experiment Clicked");
+        var value = this.ele_save_experi_input.value;
+        if(this.avail_experiment_files.includes(value))
+        {
+            if(!confirm(value + " already exists. Overwrite?"))
+            {
+                return;
+            }
+        }
+
+        this.put({"save_experiment": value}, "experiments")
+        .then(response => {
+            console.log(response);
+            this.avail_experiment_files = response.experiments.list_experiments;
+            this.populate_experiment_dropdown(this.avail_experiment_files);
+        });
+
     }
 
     bin_button_clicked(event)
