@@ -5,7 +5,7 @@ class SpectrometerAdapter extends AdapterEndpoint
     {
         super("spectrometer", api_version);
 
-        this.ele_main_spectrometer_status = document.getElementById("spec_connected");
+        this.ele_main_spectrometer_status = document.getElementById("main-spec-connected");
 
         this.ele_btn_bin_full = document.getElementById("btnBinFull");
         this.ele_btn_bin_binned = document.getElementById("btnBin");
@@ -20,6 +20,7 @@ class SpectrometerAdapter extends AdapterEndpoint
 
         this.ele_input_frame_num = document.getElementById("input-frame-num");
 
+        this.ele_btn_start_lf = document.getElementById("btn-start-lightfield");
         this.ele_btn_start_acq = document.getElementById("btn-start-acquisition");
 
         this.ele_spec_img = document.getElementById("spec_img_2");
@@ -43,6 +44,7 @@ class SpectrometerAdapter extends AdapterEndpoint
         this.ele_input_cam_exposure.addEventListener("change", (e) => this.input_val_changed(e));
         this.ele_input_cam_wavelength.addEventListener("change", (e) => this.input_val_changed(e));
 
+        this.ele_btn_start_lf.addEventListener("click", () => this.start_lightfield());
         this.ele_btn_start_acq.addEventListener("click", () => this.start_acquisition());
 
         this.ele_save_experi_btn.addEventListener("click", () => this.save_experiment_clicked());
@@ -79,6 +81,13 @@ class SpectrometerAdapter extends AdapterEndpoint
     start_acquisition(){
         var num_frames = this.ele_input_frame_num.value;
         this.put({"get_data": parseInt(num_frames)});
+    }
+
+    start_lightfield(){
+        this.put({"start_lightfield": true})
+        .then(response => {
+
+        });
     }
 
     img_refresh_loop()

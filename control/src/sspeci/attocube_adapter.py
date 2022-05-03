@@ -9,7 +9,7 @@ from odin.adapters.adapter import (ApiAdapter, ApiAdapterRequest,
                                    ApiAdapterResponse, request_types, response_types)
 from odin.adapters.parameter_tree import ParameterTree, ParameterTreeError
 from odin.util import decode_request_body
-from sspeci.attocube_controller import StageController
+from sspeci.attocube_controller import AttocubeException, StageController
 
 from tornado.ioloop import PeriodicCallback
 
@@ -81,8 +81,8 @@ class StageAdapter(ApiAdapter):
             response = self.param_tree.get(path)
             content_type = 'application/json'
             status = 200
-        except ParameterTreeError as param_error:
-            response = {'response': 'ZeroRPC GET error: {}'.format(param_error)}
+        except (ParameterTreeError, AttocubeException) as param_error:
+            response = {'response': 'Attocube GET error: {}'.format(param_error)}
             content_type = 'application/json'
             status = 400
 
@@ -99,7 +99,7 @@ class StageAdapter(ApiAdapter):
             status = 200
 
         except ParameterTreeError as param_error:
-            response = {'response': 'Cryostat PUT error: {}'.format(param_error)}
+            response = {'response': 'Attocube PUT error: {}'.format(param_error)}
             content_type = 'application/json'
             status = 400
 
@@ -111,6 +111,8 @@ class StageAdapter(ApiAdapter):
 
     def load_position(self, position_file):
         try:
+            if not position_file.endswith(".json"):
+                position_file = position_file + ".json"
             with open(os.path.join(self.saved_position_directory, position_file)) as file:
                 file_dict = json.load(file)
                 position_dict = file_dict.get("position", None)
@@ -127,6 +129,8 @@ class StageAdapter(ApiAdapter):
 
     def save_position(self, position_file):
         try:
+            if not position_file.endswith(".json"):
+                position_file = position_file + ".json"
             with open(os.path.join(self.saved_position_directory, position_file), "w+") as file:
                 data_dict = {
                     "position": {axis: target_pos for axis, target_pos in enumerate(self.controller.target_pos)},

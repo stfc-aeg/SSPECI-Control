@@ -17,12 +17,28 @@ class AxisElements
         this.ele_frequency = document.getElementById(axis_label + "-frequency");
         this.ele_target_range = document.getElementById(axis_label + "-target-range");
 
+        this.ele_save_position = document.getElementById("input-" + axis_label + "-save-position");
+        this.ele_save_range    = document.getElementById("input-" + axis_label + "-save-range");
+
+        this.ele_toggle_move = document.getElementById("btn-toggle-move-" + axis_label);
 
         this.icons = {
             "check": '<i class="bi bi-check-circle-fill"></i>',
             "exclaim": '<i class="bi bi-exclamation-octagon-fill"></i>',
             "arrows": '<i class="bi bi-arrow-left-right"></i>'
         }
+    }
+
+    set_save_text_boxes(position, range)
+    {
+        this.ele_save_position.value = position;
+        this.ele_save_range.value = range;
+    }
+
+    get_save_text_boxes()
+    {
+        return [parseFloat(this.ele_save_position.value),
+                parseFloat(this.ele_save_range.value)]
     }
 
     removeClassByPrefix(node, prefix) {
@@ -108,15 +124,56 @@ class AttocubeAdapter extends AdapterEndpoint
         ]
 
         this.ele_position_dropdown = document.getElementById("position-file-dropdown");
+        this.ele_input_file_name = document.getElementById("input-position-file-name");
+        this.ele_btn_save_file = document.getElementById("btn-save-position-file");
+        this.ele_main_atto_label = document.getElementById("main-atto-connected");
 
         this.get("position_files")
         .then(response => {
-            var position_files = response.position_files;
-            this.build_dropdown(position_files);
+            this.position_files = response.position_files;
+            this.build_dropdown(this.position_files);
+        });
+
+        this.ele_btn_save_file.addEventListener("click", () => this.save_position());
+
+        this.axis_elements.forEach(element => {
+            element.ele_save_position.addEventListener("change", (event) => this.save_position_changed(event));
+            element.ele_save_range.addEventListener("change", (event) => this.save_position_changed(event));
+            element.ele_toggle_move.addEventListener("change", (event) => this.set_auto_move(event));
         });
 
 
         this.update_loop();
+    }
+
+    save_position_changed(event)
+    {
+        var regex = /axis[0-9]/;
+        var axis_label = event.target.id.match(regex)[0];
+        var axis_label = axis_label.replace("axis", "axis_")
+        console.log(axis_label);
+
+        if(event.target.id.includes("position"))
+        {
+            this.put({"target_pos": parseFloat(event.target.value)}, axis_label);
+        }
+        else
+        {
+            this.put({"target_range": parseFloat(event.target.value)}, axis_label);
+        }
+
+    }
+
+    set_auto_move(event)
+    {
+        var regex = /axis[0-9]/;
+        var axis_label = event.target.id.match(regex)[0];
+        var axis_label = axis_label.replace("axis", "axis_")
+        console.log(axis_label);
+
+        console.log(event.target.checked);
+
+        this.put({"auto_move": event.target.checked}, axis_label);
     }
 
     update_loop()
@@ -130,6 +187,16 @@ class AttocubeAdapter extends AdapterEndpoint
             this.axis_elements[1].update_values(axis1_info);
             this.axis_elements[2].update_values(axis2_info);
 
+            this.removeClassByPrefix(this.ele_main_atto_label, "alert-");
+            this.ele_main_atto_label.innerHTML = '<i class="bi bi-check-circle-fill"></i>' + " Attocube Connected";
+            this.ele_main_atto_label.classList.add("alert-success");
+        })
+        .catch(error => {
+            console.log(error.message);
+
+            this.removeClassByPrefix(this.ele_main_atto_label, "alert-");
+            this.ele_main_atto_label.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i>' + " Attocube Disconnected";
+            this.ele_main_atto_label.classList.add("alert-danger");
 
         });
         setTimeout(() => this.update_loop(), 1000);
@@ -139,18 +206,18 @@ class AttocubeAdapter extends AdapterEndpoint
     {
         console.log("Position Dropdown Clicked: " + event.target.value);
         this.put({"load_position": event.target.value})
-        .then(() => {
-            var dropdown_elements = this.ele_position_dropdown.children;
-            dropdown_elements.forEach(element => {
-                element.firstElementChild.classList.remove("active");
-            })
-            event.target.classList.add("active");
+        .then(response => {
+
+            this.axis_elements[0].set_save_text_boxes(response.axis_0.target_pos, response.axis_0.target_range);
+            this.axis_elements[1].set_save_text_boxes(response.axis_1.target_pos, response.axis_1.target_range);
+            this.axis_elements[2].set_save_text_boxes(response.axis_2.target_pos, response.axis_2.target_range);
         });
 
     }
 
     build_dropdown(file_list)
     {
+        this.ele_position_dropdown.innerHTML = "";
         file_list.forEach(element => {
             var option = document.createElement("li");
                 var option_link = document.createElement("a");
@@ -164,6 +231,29 @@ class AttocubeAdapter extends AdapterEndpoint
 
                 option_link.addEventListener("click", event => this.position_dropdown_clicked(event));
         });
+    }
+
+    save_position()
+    {
+
+        var value = this.ele_input_file_name.value;
+        if(!value.endsWith(".json"))
+        {
+            value = value + ".json";
+        }
+        if(this.position_files.includes(value))
+        {
+            if(!confirm(value + " already exists. Overwrite?"))
+            {
+                return;
+            }
+        }
+
+        this.put({"save_position": value})
+        .then(response => {
+            this.position_files = response.position_files;
+            this.build_dropdown(this.position_files);
+        })
     }
 }
 
