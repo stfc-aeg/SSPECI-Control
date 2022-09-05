@@ -2,6 +2,7 @@
 
 class CryostatAdapter extends AdapterEndpoint
 {
+    DESIRED_PRESSURE = 266
     constructor(api_version=DEF_API_VERSION)
     {
         super("cryostat", api_version)
@@ -15,6 +16,8 @@ class CryostatAdapter extends AdapterEndpoint
 
         this.element_goal_label = document.getElementById('cryo_goal');
         this.element_state_label = document.getElementById('cryo_state');
+        this.element_current_temp = document.getElementById('alert-current-temp');
+        this.element_current_temp_main = document.getElementById("alert-cur-temp-main");
 
         this.element_btn_cooldown = document.getElementById('btn-cooldown');
         this.element_btn_vent = document.getElementById('btn-vent');
@@ -39,13 +42,16 @@ class CryostatAdapter extends AdapterEndpoint
         this.element_btn_enable_pwr_schedule.addEventListener("change", () => this.toggle_power_schedule());
         this.element_input_heater_power.addEventListener("change", (e) => this.change_power_limit(e));
 
+        this.element_btn_pid_control = document.getElementById("btn-toggle-pid-control");
         this.element_input_atsm_target = document.getElementById("input-atsm-target");
         this.element_input_platform_target = document.getElementById("input-platform-target");
         this.element_input_stage1_target = document.getElementById("input-stage1-target");
         this.element_input_stage2_target = document.getElementById("input-stage2-target");
+        this.pid_control_enabled = false;
         
         this.element_input_atsm_target.addEventListener("change", (e) => this.change_temp_target(e));
         this.element_input_platform_target.addEventListener("change", (e) => this.change_temp_target(e));
+        this.element_btn_pid_control.addEventListener("change", () => this.toggle_pid());
 
         this.element_pressure_label = document.getElementById("alert-vacuum-pressure");
 
@@ -73,6 +79,10 @@ class CryostatAdapter extends AdapterEndpoint
             this.element_input_bakeout_time.value = response.bakeout.time;
             this.bakeout_enabled = response.bakeout.enabled;
             this.element_btn_bakeout.checked = this.bakeout_enabled;
+
+            this.pid_control_enabled = response.atsm.auto_control_enabled;
+            this.element_btn_pid_control.checked = this.pid_control_enabled;
+            // this.element_current_temp.value = response.atsm.temperature;
 
             var avail_schedules = response.atsm.power_schedules_avail;
             console.log(avail_schedules);
@@ -122,7 +132,9 @@ class CryostatAdapter extends AdapterEndpoint
 
     construct_schedule_table()
     {
+        console.log("constructing Schedule Table");
         var table_body = this.element_table_pwr_schedule.getElementsByTagName('tbody')[1];
+        console.log(table_body);
         table_body.innerHTML = ""; // clear the table body to be replaced
         this.get("atsm/power_schedule")
         .then(response => {
@@ -184,6 +196,12 @@ class CryostatAdapter extends AdapterEndpoint
         //     this.element_btn_bakeout.innerHTML = "Bakeout Disabled";
         // }
 
+    }
+
+    toggle_pid()
+    {
+        this.pid_control_enabled = !this.pid_control_enabled;
+        this.put({"auto_control_enabled": this.pid_control_enabled}, "atsm"); 
     }
 
     change_power_limit(event)
@@ -291,7 +309,7 @@ class CryostatAdapter extends AdapterEndpoint
                         intersect: false,
                         mode: "index",
                     },
-                    // animation: true,
+                    animation: false,
                     scales: {
                         yAxes: [{
                             title: {
@@ -301,7 +319,7 @@ class CryostatAdapter extends AdapterEndpoint
                             ticks: {
                                 // min: 0,
                                 // max: 300,
-                                stepSize: 2
+                                stepSize: 1
                             }
                         }],
                         x: {
@@ -351,6 +369,8 @@ class CryostatAdapter extends AdapterEndpoint
 
         for(var i=0; i<this.temp_charts.length; i++)
         {
+            this.temp_charts[i].options.scales.yAxes[0].ticks.suggestedMin = Math.ceil(this.atsm_temps[0]) - 1;
+            this.temp_charts[i].options.scales.yAxes[0].ticks.suggestedMax = Math.ceil(this.atsm_temps[0]);
             this.temp_charts[i].update();
         }
     }
@@ -523,7 +543,7 @@ class CryostatAdapter extends AdapterEndpoint
             this.element_input_stage2_target.value = response.stage2.target_temp;
 
             var pressure = response.vacuum.toFixed(8);
-            if(pressure < 50) //TODO: arbitary value, ask Sion what might be a valid pressure for this
+            if(pressure < this.DESIRED_PRESSURE)
             {
                 this.element_pressure_label.innerHTML = this.icons["check"] + " " + pressure + " Pascals";
                 this.element_pressure_label.classList.remove("alert-danger");
@@ -535,6 +555,9 @@ class CryostatAdapter extends AdapterEndpoint
                 this.element_pressure_label.classList.remove("alert-success");
                 this.element_pressure_label.classList.add("alert-danger");
             }
+
+            this.element_current_temp.innerHTML = "ATSM Temperature: " + atsm_temp + "k";
+            this.element_current_temp_main.innerHTML = "ATSM Temperature: " + atsm_temp + "k";
         })
 
         setTimeout(() => this.poll_loop(), 1000);

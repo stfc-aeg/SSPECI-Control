@@ -31,13 +31,17 @@ class StageAdapter(ApiAdapter):
 
         self.controller = StageController(library_addr)
 
-        for i, target in enumerate(default_targets):
-            self.controller.setTargetPosition(i, target)
+        try:
+            for i, target in enumerate(default_targets):
+                self.controller.setTargetPosition(i, target)
 
-        for i, range in enumerate(default_tgt_range):
-            self.controller.setTargetRange(i, range)
+            for i, range in enumerate(default_tgt_range):
+                self.controller.setTargetRange(i, range)
+        except AttocubeException as err:
+            logging.error("Error on Init for default position/range: %s", err)
 
         self.param_tree = ParameterTree({
+            "device_connected": (self.is_device_connected, None),
             "axis_0": self.create_axis_tree(0),
             "axis_1": self.create_axis_tree(1),
             "axis_2": self.create_axis_tree(2),
@@ -46,8 +50,6 @@ class StageAdapter(ApiAdapter):
             "position_files": (lambda: os.listdir(self.saved_position_directory), None)
             
         })
-
-
 
     def create_axis_tree(self, axis_num):
         tree = {
@@ -108,6 +110,9 @@ class StageAdapter(ApiAdapter):
     def __del__(self):
         logging.debug("Disconnect from adapter")
         self.controller.disconnect()
+
+    def is_device_connected(self):
+        return self.controller.device is not None
 
     def load_position(self, position_file):
         try:

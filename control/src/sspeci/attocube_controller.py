@@ -17,22 +17,31 @@ class StageController:
         self.discover()
         self.device = self.connect()
 
+        self.loop_time = 500
+
         self.positions = [0,0,0]
         self.statuses = [{}, {}, {}]
         self.target_pos = [0.0,0.0,0.0]
         self.target_range = [0.0, 0.0, 0.0]
         self.voltage = [0.0, 0.0, 0.0]
 
+        logging.debug("GETTING NAMES AND TYPES")
         self.names = [self.getActuatorName(0), self.getActuatorName(1), self.getActuatorName(2)]
         self.types = [self.getActuatorType(0), self.getActuatorType(1), self.getActuatorType(2)]
-
-        prop_loop = PeriodicCallback(self.get_all_properties, 500)
-        prop_loop.start()
+        logging.debug("GOT NAMES AND TYPES")
+        self.prop_loop = PeriodicCallback(self.get_all_properties, self.loop_time)
+        self.prop_loop.start()
 
     def get_all_properties(self):
         # logging.debug("Loop")
-        self.positions = [self.getPosition(0), self.getPosition(1), self.getPosition(2)]
-        self.statuses = [self.getAxisStatus(0), self.getAxisStatus(1), self.getAxisStatus(2)]
+        if self.device:
+            self.prop_loop.callback_time = self.loop_time
+            self.positions = [self.getPosition(0), self.getPosition(1), self.getPosition(2)]
+            self.statuses = [self.getAxisStatus(0), self.getAxisStatus(1), self.getAxisStatus(2)]
+        else:
+            logging.debug("Device not found. retrying")
+            self.device = self.connect()
+            self.prop_loop.callback_time = 10000 # change callback time? not sure if this works
         # self.voltage = [self.getDcVoltage(0), self.getDcVoltage(1), self.getDcVoltage(2)]
 
     def connect(self, devNo=0):
@@ -43,10 +52,15 @@ class StageController:
         Returns
             device	Handle to the opened device, NULL on error
         '''
-        device = ctypes.c_void_p()
-        code = getattr(self.ANC, "ANC_connect")(devNo, ctypes.byref(device))
-        self.checkErrorCode(code)
-        return device
+        try:
+            device = ctypes.c_void_p()
+            code = getattr(self.ANC, "ANC_connect")(devNo, ctypes.byref(device))
+            self.checkErrorCode(code)
+            return device
+        except AttocubeException as err:
+            logging.error(err)
+            return None
+        
         
         
     def disconnect(self):
@@ -57,6 +71,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         code = getattr(self.ANC, "ANC_disconnect")(self.device)
         self.checkErrorCode(code)
        
@@ -84,10 +100,16 @@ class StageController:
         Returns
             name	Name of the actuator
         '''
-        name = ctypes.create_string_buffer(20)
-        code = getattr(self.ANC, "ANC_getActuatorName")(self.device, axisNo, ctypes.byref(name))
-        self.checkErrorCode(code)
-        return name.value.decode('utf-8').strip(" ")
+        if not self.device: 
+            return "UNKNOWN: NO DEVICE CONNECTED"
+        try:
+            name = ctypes.create_string_buffer(20)
+            code = getattr(self.ANC, "ANC_getActuatorName")(self.device, axisNo, ctypes.byref(name))
+            self.checkErrorCode(code)
+            return name.value.decode('utf-8').strip(" ")
+        except AttocubeException as err:
+            logging.error(err)
+            return "UNKNOWN"
         
         
     def getActuatorType(self, axisNo):
@@ -98,11 +120,17 @@ class StageController:
         Returns
             type_	Type of the actuator {0: linear, 1: goniometer, 2: rotator}
         '''
-        types = ["linear", "goniometer", "rotator"]
-        type_ = ctypes.c_int()
-        code = getattr(self.ANC, "ANC_getActuatorType")(self.device, axisNo, ctypes.byref(type_))
-        self.checkErrorCode(code)
-        return types[type_.value]
+        if not self.device: 
+            return "UNKNOWN: NO DEVICE CONNECTED"
+        try:
+            types = ["linear", "goniometer", "rotator"]
+            type_ = ctypes.c_int()
+            code = getattr(self.ANC, "ANC_getActuatorType")(self.device, axisNo, ctypes.byref(type_))
+            self.checkErrorCode(code)
+            return types[type_.value]
+        except AttocubeException as err:
+            logging.error("Error getting Actuator Type: %s", err)
+            return "UNKNOWN"
        
         
     def getAmplitude(self, axisNo):
@@ -114,6 +142,8 @@ class StageController:
         Returns
             amplitude	Amplitude V
         '''
+        if not self.device: 
+            return -1
         amplitude = ctypes.c_double()
         code = getattr(self.ANC, "ANC_getAmplitude")(self.device, axisNo, ctypes.byref(amplitude))
         self.checkErrorCode(code)
@@ -134,6 +164,8 @@ class StageController:
             eotBwd	Output: If end of travel detected in backward direction.
             error	Output: If the axis' sensor is in error state.
         '''
+        if not self.device: 
+            return {}
         connected = ctypes.c_int()
         enabled = ctypes.c_int()
         moving = ctypes.c_int()
@@ -141,6 +173,7 @@ class StageController:
         eotFwd = ctypes.c_int()
         eotBwd = ctypes.c_int()
         error = ctypes.c_int()
+
 
         code = getattr(self.ANC, "ANC_getAxisStatus")(self.device, axisNo, ctypes.byref(connected), ctypes.byref(enabled), ctypes.byref(moving), ctypes.byref(target), ctypes.byref(eotFwd), ctypes.byref(eotBwd), ctypes.byref(error))
         self.checkErrorCode(code)
@@ -165,6 +198,8 @@ class StageController:
             featureDuty	"Duty": Duty cycle enabled (1) or disabled (0)
             featureApp	"App": Control by IOS app enabled (1) or disabled (0)
         '''
+        if not self.device: 
+            return None
         features = ctypes.c_int()
         code = getattr(self.ANC, "ANC_getDeviceConfig")(self.device, features)
         self.checkErrorCode(code)
@@ -189,6 +224,8 @@ class StageController:
             address	Output: The device's interface address if applicable. Returns the IP address in dotted-decimal notation or the string "USB", respectively. The string buffer should be NULL or at least 16 bytes long.
             connected	Output: If the device is already connected
         '''
+        if not self.device: 
+            return None
         devType = ctypes.c_int()
         id_ = ctypes.c_int()
         serialNo = ctypes.create_string_buffer(16) 
@@ -208,6 +245,8 @@ class StageController:
         Returns
             version	Output: Version number
         '''
+        if not self.device: 
+            return -1
         version = ctypes.c_int()
         code = getattr(self.ANC, "ANC_getFirmwareVersion")(self.device, ctypes.byref(version))
         self.checkErrorCode(code)
@@ -222,13 +261,16 @@ class StageController:
         Returns
             frequency	Output: Frequency in Hz
         '''
+        if not self.device: 
+            return -1
         frequency = ctypes.c_double()
         code = getattr(self.ANC, "ANC_getFrequency")(self.device, axisNo, ctypes.byref(frequency))
         self.checkErrorCode(code)
         return frequency.value
     
     def getDcVoltage(self, axisNo):
-
+        if not self.device: 
+            return -1
         voltage = ctypes.c_double()
         code = getattr(self.ANC, "ANC_getDcVoltage")(self.device, axisNo, ctypes.byref(voltage))
         self.checkErrorCode(code)
@@ -242,6 +284,8 @@ class StageController:
         Returns
             position	Output: Current position [m] or [°]
         '''
+        if not self.device: 
+            return -1
         position = ctypes.c_double()
         code = getattr(self.ANC, "ANC_getPosition")(self.device, axisNo, ctypes.byref(position))
         self.checkErrorCode(code)
@@ -256,6 +300,8 @@ class StageController:
         Returns
             cap	Output: Capacitance [F]
         '''
+        if not self.device: 
+            return -1
         cap = ctypes.c_double()
         code = getattr(self.ANC, "ANC_measureCapacitance")(self.device, axisNo, ctypes.byref(cap))
         self.checkErrorCode(code)
@@ -270,6 +316,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return
         code = getattr(self.ANC, "ANC_saveParams")(self.device)
     
     
@@ -306,6 +354,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return
         code = getattr(self.ANC, "ANC_setAmplitude")(self.device, axisNo, ctypes.c_double(amplitude))
         self.checkErrorCode(code)
    
@@ -320,6 +370,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return
         en_num = 1 if enable else 0
         code = getattr(self.ANC, "ANC_setAxisOutput")(self.device, axisNo, en_num, autoDisable)
         self.checkErrorCode(code)
@@ -346,6 +398,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return
         code = getattr(self.ANC, "ANC_setFrequency")(self.device, axisNo, ctypes.c_double(frequency))
         self.checkErrorCode(code)
 
@@ -358,6 +412,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         logging.debug("Setting Target Position to %f", target)
         code = getattr(self.ANC, "ANC_setTargetPosition")(self.device, axisNo, ctypes.c_double(target))
         self.checkErrorCode(code)
@@ -373,6 +429,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         code = getattr(self.ANC, "ANC_setTargetRange")(self.device, axisNo, ctypes.c_double(targetRg))
         self.checkErrorCode(code)
         self.target_range[axisNo] = targetRg
@@ -388,6 +446,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         code = getattr(self.ANC, "ANC_startAutoMove")(self.device, axisNo, enable, relative)
         self.checkErrorCode(code)
         
@@ -402,6 +462,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         code = getattr(self.ANC, "ANC_startContinousMove")(self.device, axisNo, start, backward)
         self.checkErrorCode(code)
         
@@ -414,6 +476,8 @@ class StageController:
         Returns
             None
         '''
+        if not self.device: 
+            return None
         code = getattr(self.ANC, "ANC_startSingleStep")(self.device, axisNo, backward)
         self.checkErrorCode(code)
 

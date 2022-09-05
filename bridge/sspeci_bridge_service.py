@@ -12,7 +12,7 @@ import time
 class BridgeService(SMWinservice):
     _svc_name_ = "SSPECIBridge"
     _svc_display_name_ = "Spectrometer Intergration Bridge Service"
-    _svc_description_ = "Service to allow RPC control of the Spectrometer API for Odin Control"
+    _svc_description_ = "Allows RPC control of the Spectrometer API for Odin Control"
 
     def start(self):
         self.server = zerorpc.Server(sspeci_bridge_script.RPCServer())

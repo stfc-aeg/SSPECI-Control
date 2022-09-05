@@ -59,6 +59,7 @@ class CryostatAdapter(ApiAdapter):
                 "temperature": (lambda: self.cryo.sample_current_temp, None),
                 "target_temp": (lambda: self.cryo.sample_target_temp, self.cryo.set_sample_target_temp),
                 "stability": (lambda: self.cryo.temp_stabilities[0], None),
+                "is_stable": (lambda: self.cryo.is_stable, None),
                 "heater_power": (lambda: self.cryo.heater_power[0], None),
                 "power_limit": (lambda: self.cryo.power_limit, self.cryo.set_power_limit),
                 "auto_control_enabled" : (lambda: self.cryo.user_controller_enabled, self.cryo.set_controller_enabled),
@@ -180,6 +181,8 @@ class CryoClient:
         self.user_controller_enabled = False
         self.power_schedule_enabled = False
 
+        self.is_stable = False
+
         self.schedule_files = []
         logging.debug("Attempting to find Power schedule files in dir %s", schedule_dir)
         if os.path.exists(schedule_dir):
@@ -223,6 +226,7 @@ class CryoClient:
                                         stage1_sample['temperatureStability'],
                                         stage2_sample['temperatureStability'],
                                         platform_sample['temperatureStability']]
+                self.is_stable = userstage_sample['temperatureStable']
 
                 user_heater_sample = self._get_prop("/".join([self.properties['sample_stage'], "heater/properties/sample"]), s)
                 stage1_heater_sample = self._get_prop("/".join([self.properties['stage1_props'], "heater/properties/sample"]), s)
@@ -261,10 +265,27 @@ class CryoClient:
                     self.power_limit = planned_power
 
         except (Timeout, ConnectionError):
+            if self.cryo_connected:
+                logging.error("Error connecting to Cryostat API. Check power")
             self.cryo_connected = False
-            logging.error("TIMEOUT OR CONNECTION ERROR OH NO")
+            
 
-        end_time = time.time()
+        # end_time = time.time()
+
+    #TODO: break down get_all_properties to small bits
+    # def get_sample_properties(self, propertsession=None):
+    #     if not session:
+    #         s = requests.Session()
+    #     else:
+    #         s = session
+    #     userstage_sample = self._get_prop("/".join([self.properties['sample_stage'], "thermometer/properties/sample"]), s)
+    #     self.sample_current_temp = userstage_sample['temperature']
+    #     self.temp_stabilities[0] = userstage_sample['temperatureStability']
+    #     self.is_stable = userstage_sample['temperatureStable']
+    #     self.sample_target_temp = self._get_prop("/".join([self.properties['sample_stage'], "properties/targetTemperature"]), s)
+
+    #     if not session:
+    #         s.close()
 
 
     def _get_prop(self, prop, session=None):
@@ -318,6 +339,7 @@ class CryoClient:
             full_addr = "/".join([self.properties['sample_stage'], "properties/targetTemperature"])
 
             self._set_prop(full_addr, value)
+            self.get_all_properties()  # force update so the stability flag can be false again
 
         except (Timeout, ConnectionError):
             logging.debug("Set Target Temp Failed: ")

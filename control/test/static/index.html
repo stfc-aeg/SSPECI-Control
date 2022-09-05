@@ -23,19 +23,6 @@
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                  <li class="nav-item active">
-                    <a class="nav-link" href="#">Home</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#about">About</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#contact">Contact</a>
-                  </li>
-                </ul>
-            </div>
         </nav>
 
         <ul class="nav nav-tabs" role="tablist">
@@ -61,86 +48,225 @@
             </li>
         </ul>
 
-        <div class="tab-content">
+        <div class="tab-content mt-4">
             <div class="tab-pane fade show active" id="home" role="tabpanel">
-                <h2 class="text-center">Home</h2>
-
                 <div class="container-fluid">
-                    <div class="row contflex"> <!-- status and control row -->
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-header">
-                                    System Status
-                                </div>
-                                <div class="card-body">
-                                    <div class="row contflex">
-                                        <div class="col">
-                                            <div class="alert alert-success" role="alert" id="main-spec-connected">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                Spectrometer Ready
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <div class="alert alert-warning" role="alert" id="main-cryo-connected">
-                                                <i class="bi bi-exclamation-circle-fill d-none"></i>
-                                                Cryostat Cooling
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <div class="alert alert-danger" role="alert" id="main-atto-connected">
-                                                <i class="bi bi-exclamation-octagon-fill"></i>
-                                                Attocube Disconnected
-                                            </div>
-                                        </div>
+                    <div class="row"> <!-- status and control row -->
+                        <div class="col mx-2">
+                            <div class="row mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        System Status
                                     </div>
-                                    <div class="row contflex">
-                                        <div class="alert alert-danger text-center" role="alert" id="system_status">
-                                            Not Currently Running
+                                    <div class="card-body">
+                                        <div class="row contflex">
+                                            <div class="col">
+                                                <div class="alert alert-warning" role="alert" id="main-spec-connected">
+                                                    <i class="bi bi-exclamation-octagon-fill"></i>
+                                                    Spectrometer STATUS LOADING
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="alert alert-warning" role="alert" id="main-cryo-connected">
+                                                    <i class="bi bi-exclamation-octagon-fill"></i>
+                                                    Cryostat STATUS LOADING
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="alert alert-warning" role="alert" id="main-atto-connected">
+                                                    <i class="bi bi-exclamation-octagon-fill"></i>
+                                                    Attocube STATUS LOADING
+                                                </div>
+                                            </div>
                                         </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="alert alert-danger text-center" role="alert" id="system_status">
+                                                    Not Currently Running
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <!-- <div class="row"> -->
+                                            <div class="progress">
+                                                <div id="acq-progress" class="progress-bar" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50/100</div>
+                                            </div>
+
+                                        <!-- </div> -->
+                                    </div>
+                                </div> <!-- status card -->
+                            </div>
+                            <div class="row">
+                                <div class="card text-center">
+                                    <div class="card-header">Spectrometer Image</div>
+                                    <div class="card-body">
+                                        <img class="img-fluid spectrometer_img" id="spec_img" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image"
+                                         onerror="if (this.src != 'img/no_data_img.png') this.src = 'img/no_data_img.png'">
                                     </div>
                                 </div>
                             </div>
                         </div> <!-- end of status column -->
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-header">
-                                    Basic Controls
+                        <div class="col mx-2">
+                            <div class="row mb-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Basic Controls
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row contflex mb-2">
+                                            <div class="col">
+                                                <div class="btn-group" role="group" aria-label="start/stop acquisiton">
+                                                    <button id="btn-modal-start-acq" type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modal_start_acq">
+                                                        Begin Acquisition
+                                                    </button>
+                                                    <button id="btn-modal-stop-acq" type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modal_stop_acq" >
+                                                        Stop Acquisition
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <button type="button" class="btn btn-primary btn-lg" disabled>Begin Cooldown</button>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="btn-group" role="group" aria-label="Acquisition Mode">
+                                                <input type="radio" class="btn-check" id="btn-check-photo-acq-mode" checked name="acq-mode">
+                                                <label class="btn btn-outline-primary" for="btn-check-photo-acq-mode">Photoluminescence Mode</label>
+                                                <input type="radio" class="btn-check" id="btn-check-thermo-acq-mode" name="acq-mode">
+                                                <label class="btn btn-outline-primary" for="btn-check-thermo-acq-mode">Thermoluminescence Mode</label>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col">
+                                                <div class="btn-group" role="group" aria-label="Binning Controls">
+                                                    <input type="radio" class="btn-check" name="btnradio" id="btnBinFull-main" autocomplete="off" value="FullSensor">
+                                                    <label class="btn btn-outline-primary" for="btnBinFull-main">Full Sensor</label>
+                                                    <input type="radio" class="btn-check" name="btnradio" id="btnBin-main" autocomplete="off" value="BinnedSensor">
+                                                    <label class="btn btn-outline-primary" for="btnBin-main">Full Sensor (Binned)</label>
+                                                    <input type="radio" class="btn-check" name="btnradio" id="btnBinRow-main" autocomplete="off" value="LineSensor">
+                                                    <label class="btn btn-outline-primary" for="btnBinRow-main">Rows Binned</label>
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" for="input-bin-rows-main">Row Bin Size</span>
+                                                    <input type="number" class="form-control" id="input-bin-rows-main">
+                                                    <span class="input-group-text" for="input-bin-cols-main">Column Bin Size</span>
+                                                    <input type="number" class="form-control" id="input-bin-cols-main">
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" for="input-bin-line-main">Line Bin Count</span>
+                                                    <input type="number" class="form-control" id="input-bin-line-main">
+                                                </div>
+                                                <br>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" for="input-camera-exposure-main">Exposure</span>
+                                                    <input type="number" class="form-control" id="input-camera-exposure-main">
+                                                    <select class="form-select" id="select-exposure-multiplier-main">
+                                                        <option selected value="1">Milliseconds</option>
+                                                        <option value="1000">Seconds</option>
+                                                        <option value="60000">Minutes</option>
+                                                    </select>
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" for="input-camera-wavelength-main">Centre Wavelength (nm)</span>
+                                                    <input type="number" class="form-control" id="input-camera-wavelength-main">
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="btn-select-temperature-list" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Select List of Temperature Steps
+                                                    </button>
+                                                    <ul id="temperature-list-dropdown" class="dropdown-menu" aria-labelledby="btn-select-temperature-list">
+                                                    </ul>
+                                                </div>
+                                                <table id="temperature-list-table" class="table text-center table-bordered border-primary overflow-auto">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Temperature (K)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="modal fade" id="modal_start_acq" tabindex="-1" role="dialog">
+                                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="modal_start_acq_title">Start Acquisition?</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text" for="input-frame-num">Number of Frames</span>
+                                                            <input type="number" class="form-control" id="input-frame-num">
+                                                        </div>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text" for="input-hdf-file-name">Save to:</span>
+                                                            <input type="text" class="form-control" id="input-hdf-file-name">
+                                                        </div>
+                                                        Current Spectrometer Settings:
+                                                        <div class="input-group">
+                                                            <span class="input-group-text" for="acq_start_exposure">Exposure (s):</span>
+                                                            <input type="number" class="form-control form-control-sm" id="acq_start_exposure" disabled>
+                                                            <span class="input-group-text" for="acq_start_center_wave">Centre Wavelength:</span>
+                                                            <input type="number" class="form-control form-control-sm" id="acq_start_center_wave" disabled>
+                                                        </div>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text" for="acq_start_bin_mode">Binning Mode</span>
+                                                            <input type="text" class="form-control form-control-sm" id="acq_start_bin_mode" disabled>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="button" class="btn btn-primary" id="btn-start-acq" data-bs-dismiss="modal">Begin Acquisition</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal fade" id="modal_stop_acq" tabindex="-1" role="dialog">
+                                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Stop Acquisition?</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Clicking "Yes" will stop the acquisition. Frames already captured have been saved.
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                                        <button type="button" class="btn btn-primary" id="btn-stop-acq" data-bs-dismiss="modal">Yes</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <button type="button" class="btn btn-primary btn-lg">Begin Aquisition</button>
-                                    <button type="button" class="btn btn-primary btn-lg" disabled>Begin Cooldown</button> 
+                            </div> <!--Row-->
+                            <div class="row">
+                                <div class="card">
+                                    <div class="card-header">Cryostat Temperature</div>
+                                    <div class="card-body">
+                                        <div class="alert alert-secondary" id="alert-cur-temp-main" role="alert">
+                                            ATSM TEMP: UNKNOWN
+                                        </div>
+                                        <!-- <canvas id="temperature-chart" class="chart-temperature"></canvas> -->
+                                    </div>
                                 </div>
                             </div>
                         </div> <!-- End of Control Column-->
                     </div> <!-- Status/column row-->
-                    <div class="row contflex">
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-header">Spectrometer Image</div>
-                                <div class="card-body">
-                                    <img class="img-fluid spectrometer_img" id="spec_img" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-header">Temperature Graph</div>
-                                <div class="card-body">
-                                    <canvas id="temperature-chart" class="chart-temperature"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="tab-pane fade" id="spectrometer" role="tabpanel">
 <!-- ~~~~~~~~~~~~~~~~~SPECTROMETER TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-                <h2 class="text-center">Spectrometer</h2>
-
                 <div class="container-fluid">
                     <div class="row contflex"> <!-- status and control row -->
                         <div class="col text-center">
-                            <img class="img-fluid spectrometer_img" id="spec_img_2" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image">
+                            <img class="img-fluid spectrometer_img" id="spec_img_2" src="/api/0.1/spectrometer/image" data-src="/api/0.1/spectrometer/image"
+                             onerror="if (this.src != 'img/no_data_img.png') this.src = 'img/no_data_img.png'">
                         </div>
                         <div class="col">
                             <div class="card">
@@ -148,10 +274,10 @@
                                 <div class="card-body">
                                     <button type="button" class="btn btn-primary btn-lg" id="btn-start-lightfield">Start Lightfield</button>
                                     <button type="button" class="btn btn-primary btn-lg" id="btn-start-acquisition">Start Acquisition</button>
-                                    <div class="input-group">
+                                    <!-- <div class="input-group">
                                         <span class="input-group-text" for="input-frame-num">Number of Frames</span>
                                         <input type="number" class="form-control" id="input-frame-num">
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                             <div class="card">
@@ -179,9 +305,14 @@
                                     <div class="input-group">
                                         <span class="input-group-text" for="input-camera-exposure">Exposure</span>
                                         <input type="number" class="form-control" id="input-camera-exposure">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-text" for="input-camera-wavelength">Centre Wavelength</span>
+                                        <select class="form-select" id="select-exposure-multiplier">
+                                            <option selected value="1">Milliseconds</option>
+                                            <option value="1000">Seconds</option>
+                                            <option value="60000">Minutes</option>
+                                        </select>
+                                    <!-- </div>
+                                    <div class="input-group"> -->
+                                        <span class="input-group-text" for="input-camera-wavelength">Centre Wavelength (nm)</span>
                                         <input type="number" class="form-control" id="input-camera-wavelength">
                                     </div>
                                 </div>
@@ -230,9 +361,8 @@
             </div>
             <div class="tab-pane fade" id="cryostat" role="tabpanel">
 <!-- ~~~~~~~~~~~~~~~~~CRYOSTAT TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-                <h2 class="text-center">Cryostat</h2>
                 <div class="container-fluid">
-                    <div class="row contflow">
+                    <div class="row contflow mb-4">
                         <div class="col"> <!--State Bit-->
                             <div class="card">
                                 <div class="card-header">
@@ -336,6 +466,10 @@
                             <div class="card">
                                 <div class="card-header">Target Temperatures</div>
                                 <div class="card-body">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="btn-toggle-pid-control">
+                                        <label class="form-check-label" for="btn-toggle-pid-control">Enable PID Control</label>
+                                    </div>
                                     <div class="input-group">
                                         <span class="input-group-text" for="input-atsm-target">ATSM Target</span>
                                         <input type="number" class="form-control" id="input-atsm-target">
@@ -365,6 +499,9 @@
                             <div class="card">
                                 <div class="card-header">Temperature Graph</div>
                                 <div class="card-body">
+                                    <div class="alert alert-secondary" id="alert-current-temp" role="alert">
+                                        ATSM Current Temp: XXX K
+                                    </div>
                                     <canvas id="chart-temperature-main" class="chart-temperature"></canvas>
                                 </div>
 
@@ -375,7 +512,6 @@
             </div>
             <div class="tab-pane fade" id="attocube" role="tabpanel">
 <!-- ~~~~~~~~~~~~~~~~~ATTOCUBE TAB~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-                <h2 class="text-center">Attocube</h2>
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col">
@@ -629,6 +765,7 @@
         <script src="js/spectrometer.js"></script>
         <script src="js/attocube.js"></script>
         <script src="js/cryostat.js"></script>
+        <script src="js/acquisition.js"></script>
         <!-- <script src="js/spectrometer.js"></script> -->
 
     </body>

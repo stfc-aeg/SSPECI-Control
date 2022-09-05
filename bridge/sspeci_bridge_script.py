@@ -1,3 +1,4 @@
+from pickle import FALSE
 from typing import ByteString
 from numpy.core.fromnumeric import shape
 from numpy.core.multiarray import array
@@ -23,13 +24,14 @@ clr.AddReference('PrincetonInstruments.LightField.AutomationV5')
 clr.AddReference('PrincetonInstruments.LightFieldAddInSupportServices')
 
 from System import String, Array
+from System.Runtime.Remoting import RemotingException
 clr.AddReference('System.Collections')
 from System.Collections.Generic import List
 
 # PI imports
 from PrincetonInstruments.LightField.Automation import Automation
 from PrincetonInstruments.LightField.AddIns import SpectrometerSettings, ExperimentSettings, CameraSettings
-from PrincetonInstruments.LightField.AddIns import DeviceType
+from PrincetonInstruments.LightField.AddIns import DeviceType, ImageDataFormat
 
 
 
@@ -42,6 +44,7 @@ class APIController:
 
     
     def __init__(self):
+        logging.debug("HEY WERE USING THE THREAD FOR DATA COLLECTION NOW")
 
         self.application = None
         self.experiment = None
@@ -53,9 +56,13 @@ class APIController:
         self.lightfield_running = False
         self.experiment_running = False
         self.ready_to_run = False
+        self.getting_data = False
+
+        self.current_working_file = None
+        self.working_file_frame_num = 0
 
     def start_lightfield(self, visible):
-        logging.debug("Starting Lightfield Software")
+        logging.info("Starting Lightfield Software")
         if self.lightfield_running:
             logging.debug("Lightfield Already Running")
             return
@@ -101,14 +108,14 @@ class APIController:
 
 
     def close_lightfield(self):
-        logging.debug("Closing Lightfield Application")
+        logging.info("Closing Lightfield Application")
         if self.application:
             self.application.Dispose()
             self.application = None
     
     def get_experiment_value(self, setting):
         if self.lightfield_running and self.experiment.Exists(setting):
-            print(setting)
+            logging.debug(setting)
             val = self.experiment.GetValue(setting)
         else:
             logging.debug("Cannot get %s: Either Lightfield is not running, or that setting does not exist", setting)
@@ -151,15 +158,33 @@ class APIController:
         return ready_to_run
 
     def acquire_data(self, num_frames=0):
+        # modify to get data via thread so it does not block down the line
         if self.check_ready_for_acquire():
-            if num_frames < 1:
-                self.experiment.Acquire()
-                return None
-            else:
-                logging.debug("Beginning acquisition of %d frames", num_frames)
-                data = self.experiment.Capture(num_frames) # returns IImageDataSetContractToViewHostAdapter?
-                extracted_data = self.get_file_data(data)
-                return extracted_data
+            
+            logging.debug("Beginning acquisition of %d frames", num_frames)
+            data_thread = threading.Thread(target=self._thread_get_frame)
+            self.getting_data = True
+            data_thread.start()
+            
+            # data = self.experiment.Capture(num_frames) # returns IImageDataSetContractToViewHostAdapter?
+            # extracted_data = self.get_file_data(data)
+            # return extracted_data
+
+    def _thread_get_frame(self):
+        logging.info("Data Collection thread started")
+        data = self.experiment.Capture(1)
+        self.data = self.get_file_data(data)
+        self.getting_data = False
+        logging.info("Data acquired, stopping thread")
+
+    def is_getting_data(self):
+        return self.getting_data
+
+    def get_frame(self):
+        if not self.getting_data:
+            return self.data
+        else:
+            return None
 
     def preview(self):
         if self.check_ready_for_acquire():
@@ -171,6 +196,17 @@ class APIController:
             self.experiment.Stop()
 
     # file Handling Methods
+
+    def create_acquisition_file(self, num_frames):
+        if self.lightfield_running:
+            logging.debug("Creating Temp File for acquisition Saving")
+            if self.current_working_file:
+                try:
+                    self.file_handler.CloseFile(self.current_working_file)
+                except RemotingException as err:
+                    pass
+            self.current_working_file = self.file_handler.CreateFile("temp.spe", self.experiment.SelectedRegions, num_frames, ImageDataFormat.MonochromeUnsigned16)
+            self.working_file_frame_num = 0
 
     def get_recent_files(self):
         if self.lightfield_running:
@@ -194,6 +230,13 @@ class APIController:
         logging.debug("Returning image of dimensions: (%d, %d)", img_width, img_height)
 
         raw_data = image_data.GetData()  # returns a System.Array, which does not seem to iterate in a way numpy likes
+        
+        if self.current_working_file: # add data to current working file, so the total acquisiton data can be saved
+            logging.debug(self.current_working_file)
+            frame = self.current_working_file.GetFrame(0, self.working_file_frame_num)
+            frame.SetData(raw_data)
+            self.working_file_frame_num += 1
+
         # data = array('I')
         data = list(raw_data)
         # data.extend(raw_data)
@@ -209,6 +252,10 @@ class APIController:
             # "metadata": metadata
         }
         # return raw_data
+
+    def save_current_file(self, file_name):
+        if self.lightfield_running:
+            self.file_handler.SaveFile(self.current_working_file, file_name)
 
     def create_export_settings(self, file_type):
         if self.lightfield_running:
@@ -264,6 +311,10 @@ class APIController:
 
         self.lightfield_running = False
 
+    def is_lightfield_running(self):
+        return self.lightfield_running
+    
+
 class RPCServer:
 
     def __init__(self):
@@ -290,6 +341,9 @@ class RPCServer:
         visible -- whether the software UI should be visible or not
         """
         self.api.start_lightfield(visible)
+
+    def is_lightfield_running(self):
+        return self.api.is_lightfield_running()
 
     def get_camera_exposure(self):
         """Get the current exposure of the camera"""
@@ -407,14 +461,21 @@ class RPCServer:
         """Start the acquisition. if num_frames is set above 0, this will return the data.
         Otherwise, this will save the data into a local file, with a number of frames set by the
         experiment value. Be aware, this method currently blocks until the acquisition is completed"""
-        data = self.api.acquire_data(num_frames)
-        return data
+        self.api.acquire_data(num_frames)
+        # return data
 
     def stop_acquire(self):
         self.api.stop_acquire()
 
     def preview(self):
         self.api.preview()
+
+    def save_file(self, file_name):
+        self.api.save_current_file(file_name)
+
+    def create_file(self, num_frames):
+        self.api.create_acquisition_file(num_frames)
+        return self.api.current_working_file.FilePath
 
     def get_files(self):
         return self.api.get_recent_files()
@@ -430,6 +491,15 @@ class RPCServer:
 
     def save_experiment(self, experiment_name=None):
         return self.api.save_experiment(experiment_name)
+
+    def is_alive(self):
+        return True  # tells the client that this service is running
+
+    def is_getting_data(self):
+        return self.api.is_getting_data()
+
+    def get_frame(self):
+        return self.api.get_frame()
 
 if __name__ == "__main__":
 
@@ -450,7 +520,7 @@ else:
     logging.basicConfig(
         filename="c:\\Temp\\sspeci-service.log",
         filemode='w',
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt='%H:%M:%S',
         format='%(asctime)s %(levelname)-8s %(message)s'
     )

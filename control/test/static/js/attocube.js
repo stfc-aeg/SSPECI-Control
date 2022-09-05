@@ -188,16 +188,17 @@ class AttocubeAdapter extends AdapterEndpoint
             this.axis_elements[2].update_values(axis2_info);
 
             this.removeClassByPrefix(this.ele_main_atto_label, "alert-");
-            this.ele_main_atto_label.innerHTML = '<i class="bi bi-check-circle-fill"></i>' + " Attocube Connected";
-            this.ele_main_atto_label.classList.add("alert-success");
-        })
-        .catch(error => {
-            console.log(error.message);
-
-            this.removeClassByPrefix(this.ele_main_atto_label, "alert-");
-            this.ele_main_atto_label.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i>' + " Attocube Disconnected";
-            this.ele_main_atto_label.classList.add("alert-danger");
-
+            if(response.device_connected)
+            {
+                this.ele_main_atto_label.innerHTML = '<i class="bi bi-check-circle-fill"></i>' + " Attocube Connected";
+                this.ele_main_atto_label.classList.add("alert-success");
+            }
+            else
+            {
+                this.ele_main_atto_label.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i>' + " Attocube Disconnected";
+                this.ele_main_atto_label.classList.add("alert-danger");
+            }
+            
         });
         setTimeout(() => this.update_loop(), 1000);
     }
